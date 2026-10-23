@@ -33,6 +33,7 @@ fn app_entry() -> ManifestEntry {
         size_bytes: APP_PY.len() as u64,
         line_count: 40,
         change: ChangeKind::Modified,
+        base_digest: None,
         renamed_from: None,
     }
 }
@@ -380,6 +381,7 @@ fn snapshot_for(r: &ReviewReport) -> Snapshot {
             capture_passes: 2,
             manifest_digest: manifest_digest(),
         },
+        gaps: bvec(vec![]),
     }
 }
 

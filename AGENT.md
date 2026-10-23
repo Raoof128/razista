@@ -48,6 +48,8 @@ cargo run --locked -p xtask -- schemas      # regenerate schemas/ after contract
   report validation, JSON Schema generation, trusted config and policy.
 - `crates/ultra-store` — durable jobs, append-only events, content-addressed evidence
   blobs, ownership checks, recovery and retention (SQLite, bundled).
+- `crates/ultra-repo` — immutable snapshots and diff context; the only code that runs git,
+  through a hardened read-only runner.
 - `crates/ultra-mcp` — MCP adapters (T18+). Currently holds the rmcp protocol probe.
 - `crates/xtask` — R26 source audit and schema generation.
 - `schemas/` — generated; do not hand-edit. `profiles/` — trusted operator profiles.
@@ -105,3 +107,20 @@ Raouf: 2026-10-23 (Australia/Sydney) — T04 durable store
 - Verification: `cargo test --workspace --locked` 114/114; clippy/fmt clean; audit 0 violations.
 - Follow-ups: next dependency-ready tasks are T05 (sandbox; needs a pinned Lima VM image)
   and T06 (safe Git snapshots), both after T03.
+
+---
+
+Raouf: 2026-10-23 (Australia/Sydney) — T06 immutable snapshots
+- Scope: new `ultra-repo` crate; review fixes; artefact owner scoping in `ultra-store`.
+- Rules for agents:
+  - Never run git outside `ultra-repo`'s runner (`git.rs`), and never add porcelain that reads
+    the working tree through git (status, diff against worktree, add, checkout): those run
+    filters and textconv. Read working-tree bytes with `paths::read_worktree`.
+  - Any new git subcommand must be read-only, use `--end-of-options` before revisions, and be
+    covered by the hostile-config canary test.
+  - Never fetch or guess a base. Missing revisions or objects are `BASE_UNAVAILABLE`.
+  - A skipped input that changed must raise a gap; never drop a path from the manifest.
+  - `put_artifact` takes the storing owner; evidence may only cite its job owner's artefacts.
+- Verification: `cargo test --workspace --locked` 154/154; clippy/fmt clean; audit 0 violations.
+- Follow-ups: T05 (sandbox) still needs a pinned Lima VM image; T07 (offline bundles, doctor)
+  and T09 (context index, after T06) are next candidates.

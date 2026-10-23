@@ -1,0 +1,25 @@
+[package]
+name = "ultra-repo"
+description = "Immutable repository snapshots, exact diff scope and safe path handling."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+ultra-core = { path = "../ultra-core" }
+ultra-store = { path = "../ultra-store" }
+rustix.workspace = true
+sha1.workspace = true
+sha2.workspace = true
+serde_json.workspace = true
+similar.workspace = true
+tempfile.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+tempfile.workspace = true
+
+[lints]
+workspace = true

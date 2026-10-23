@@ -61,7 +61,7 @@ fn missing_blob_file_is_reported_not_silently_valid() {
     let id = {
         let store = open(&root, &clock);
         let id = store
-            .put_artifact(b"log", TrustLabel::ToolOutput)
+            .put_artifact(&anyone(), b"log", TrustLabel::ToolOutput)
             .expect("put");
         std::fs::remove_file(store.blob_path(&id)).expect("lose the file");
         id
@@ -86,10 +86,10 @@ fn migration_preserves_evidence_links() {
             .create_job(request(&setup, "start-0001"))
             .expect("job");
         let a = store
-            .put_artifact(b"stdout", TrustLabel::ToolOutput)
+            .put_artifact(&setup.owner, b"stdout", TrustLabel::ToolOutput)
             .expect("a");
         let b = store
-            .put_artifact(b"stderr", TrustLabel::ToolOutput)
+            .put_artifact(&setup.owner, b"stderr", TrustLabel::ToolOutput)
             .expect("b");
         let ev = evidence(setup.preparation.snapshot_id, vec![a, b]);
         store.put_evidence(job.job_id, &ev).expect("evidence");
@@ -138,10 +138,10 @@ fn retention_removes_owned_cache_blobs() {
         .expect("job");
 
     let loose = store
-        .put_artifact(b"scratch log", TrustLabel::ToolOutput)
+        .put_artifact(&setup.owner, b"scratch log", TrustLabel::ToolOutput)
         .expect("put");
     let kept = store
-        .put_artifact(b"evidence log", TrustLabel::ToolOutput)
+        .put_artifact(&setup.owner, b"evidence log", TrustLabel::ToolOutput)
         .expect("put");
     let ev = evidence(setup.preparation.snapshot_id, vec![kept.clone()]);
     store.put_evidence(job.job_id, &ev).expect("evidence");
@@ -229,7 +229,7 @@ fn pinned_evidence_survives_retention() {
         .create_job(request(&setup, "start-0001"))
         .expect("job");
     let a = store
-        .put_artifact(b"repro run", TrustLabel::ToolOutput)
+        .put_artifact(&setup.owner, b"repro run", TrustLabel::ToolOutput)
         .expect("put");
     let ev = evidence(setup.preparation.snapshot_id, vec![a.clone()]);
     store.put_evidence(job.job_id, &ev).expect("evidence");
@@ -316,11 +316,11 @@ fn restored_bytes_are_not_immediately_expired() {
     let clock = FakeClock::at(T0);
     let store = open(&root, &clock);
     let id = store
-        .put_artifact(b"", TrustLabel::ToolOutput)
+        .put_artifact(&anyone(), b"", TrustLabel::ToolOutput)
         .expect("put");
     clock.advance(8 * DAY_MS);
     store
-        .put_artifact(b"", TrustLabel::ToolOutput)
+        .put_artifact(&anyone(), b"", TrustLabel::ToolOutput)
         .expect("put again");
     let r = store
         .apply_retention(&RetentionPolicy::default())
@@ -340,10 +340,11 @@ fn test_artifact_of_pinned_evidence_survives_retention() {
         .create_job(request(&setup, "start-0001"))
         .expect("job");
     let log = store
-        .put_artifact(b"log", TrustLabel::ToolOutput)
+        .put_artifact(&setup.owner, b"log", TrustLabel::ToolOutput)
         .expect("put");
     let test = store
         .put_artifact(
+            &setup.owner,
             b"def test_add(): assert add(2, 2) == 4",
             TrustLabel::ModelOutput,
         )

@@ -89,7 +89,15 @@ impl Store {
 
     /// Store `bytes` and return their content address. Returns only after the
     /// bytes and their metadata row are both durable.
-    pub fn put_artifact(&self, bytes: &[u8], trust: TrustLabel) -> Result<ArtifactId> {
+    ///
+    /// `owner` is recorded as having stored these bytes; only evidence of that
+    /// owner's jobs may later cite them.
+    pub fn put_artifact(
+        &self,
+        owner: &CallerId,
+        bytes: &[u8],
+        trust: TrustLabel,
+    ) -> Result<ArtifactId> {
         let digest = Digest::of(bytes);
         let id = ArtifactId::from(digest.clone());
         let blob = self.blob_path(&id);
@@ -135,6 +143,11 @@ impl Store {
                 ms(now),
                 enum_name(&TrustLabel::Untrusted)?
             ],
+        )
+        .map_err(store_err)?;
+        conn.execute(
+            "INSERT OR IGNORE INTO artifact_owners (digest, owner) VALUES (?1, ?2)",
+            params![digest.as_str(), owner.to_string()],
         )
         .map_err(store_err)?;
         Ok(id)
@@ -190,15 +203,15 @@ impl Store {
         let tx = conn
             .transaction_with_behavior(TransactionBehavior::Immediate)
             .map_err(store_err)?;
-        let row: Option<(String, String)> = tx
+        let row: Option<(String, String, String)> = tx
             .query_row(
-                "SELECT snapshot_id, status FROM jobs WHERE job_id = ?1",
+                "SELECT snapshot_id, status, owner FROM jobs WHERE job_id = ?1",
                 params![job.to_string()],
-                |r| Ok((r.get(0)?, r.get(1)?)),
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
             )
             .optional()
             .map_err(store_err)?;
-        let Some((snapshot, status)) = row else {
+        let Some((snapshot, status, owner)) = row else {
             return Err(ReviewError::invalid(format!("unknown job {job}")));
         };
         if matches!(
@@ -224,6 +237,21 @@ impl Store {
             )
             .collect();
         for artifact in &named {
+            let stored_by_owner = tx
+                .query_row(
+                    "SELECT 1 FROM artifact_owners WHERE digest = ?1 AND owner = ?2",
+                    params![artifact.digest().as_str(), owner],
+                    |_| Ok(()),
+                )
+                .optional()
+                .map_err(store_err)?
+                .is_some();
+            if !stored_by_owner {
+                // Uniform with other ownership denials; also covers digests
+                // that were never stored at all.
+                self.read_artifact_in(&tx, artifact)?;
+                return Err(not_found_or_not_owned("artifact"));
+            }
             self.read_artifact_in(&tx, artifact)?;
         }
         if snapshot != evidence.subject_snapshot.to_string() {

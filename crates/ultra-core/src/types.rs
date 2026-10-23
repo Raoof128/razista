@@ -141,7 +141,12 @@ pub enum ChangeKind {
 #[serde(deny_unknown_fields)]
 pub struct ManifestEntry {
     pub path: RepoPath,
+    /// Digest of the reviewed bytes (for a deletion: the bytes that were deleted).
     pub digest: Digest,
+    /// Digest of the base-side bytes (the same path, or the rename source) for
+    /// a `modified` or `renamed` entry; `None` otherwise. Lets diffs be rebuilt
+    /// from stored blobs.
+    pub base_digest: Option<Digest>,
     pub mode: FileMode,
     pub size_bytes: u64,
     pub line_count: u32,
@@ -173,8 +178,8 @@ pub struct SkippedInput {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct SnapshotManifest {
-    pub entries: BoundedVec<ManifestEntry, 20000>,
-    pub skipped: BoundedVec<SkippedInput, 20000>,
+    pub entries: BoundedVec<ManifestEntry, 50000>,
+    pub skipped: BoundedVec<SkippedInput, 200000>,
 }
 
 /// How the capture proved it did not mix concurrent edits.
@@ -193,6 +198,8 @@ pub struct Snapshot {
     pub resolved_scope: ResolvedScope,
     pub manifest: SnapshotManifest,
     pub consistency_evidence: ConsistencyEvidence,
+    /// Everything the capture could not include or wants the reader to know.
+    pub gaps: BoundedVec<CoverageGap, 1000>,
 }
 
 /// A cited range of reviewed bytes. Lines are 1-based and inclusive.
@@ -279,6 +286,8 @@ pub enum GapKind {
     ScannerUnavailable,
     InputSkipped,
     ContextTruncated,
+    /// Paths that differ only by letter case; unsafe on case-insensitive volumes.
+    CaseCollision,
     CandidateCapReached,
     BudgetExhausted,
     StageFailed,

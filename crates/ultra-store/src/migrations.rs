@@ -71,6 +71,14 @@ CREATE TABLE artifacts (
     created_at INTEGER NOT NULL
 );
 
+-- Who stored each artefact. Evidence may only cite artefacts its job's owner
+-- stored, so knowing a digest grants nothing (no cross-owner confused deputy).
+CREATE TABLE artifact_owners (
+    digest TEXT NOT NULL REFERENCES artifacts(digest) ON DELETE CASCADE,
+    owner  TEXT NOT NULL,
+    PRIMARY KEY (digest, owner)
+);
+
 CREATE TABLE evidence (
     evidence_id TEXT PRIMARY KEY,
     job_id      TEXT NOT NULL REFERENCES jobs(job_id) ON DELETE CASCADE,

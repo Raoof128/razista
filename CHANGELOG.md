@@ -4,6 +4,50 @@ All notable changes to RAZISTA (Local Ultra Review MCP). Newest first.
 
 ---
 
+Raouf: 2026-10-23 (Australia/Sydney) — T06 immutable snapshots
+- **Scope:** Plan task T06 (immutable Git and worktree snapshots), its independent review
+  fixes, and a post-commit security fix in `ultra-store`.
+- **Summary:**
+  - New crate `ultra-repo` with `Snapshotter::capture(grant, scope)` and
+    `Snapshotter::diff(snapshot)`. Scopes: worktree, staged, commit (explicit merge parent),
+    branch (explicit base, merge-base), range, paths. Nothing is fetched and no default
+    branch is guessed; unavailable revisions or objects (partial or shallow clones) are
+    `BASE_UNAVAILABLE`.
+  - Git is run with a cleared environment, no global/system config, an empty private HOME,
+    forced `-c` overrides for every program-launching setting, `--no-lazy-fetch`,
+    `protocol.allow=never` and no optional locks. Only read-only plumbing is used; working-tree
+    bytes are read by Rust through an `openat(O_NOFOLLOW)` walk, never through status/diff.
+  - Two passes per attempt, one retry, then `SNAPSHOT_UNSTABLE`. Exact-content renames,
+    staged/unstaged without double counting, sparse-checkout aware, CRLF conversion
+    reproduced, filter/encoding/ident conversions flagged.
+  - Every tracked, base and untracked path is either a manifest entry or a skipped input with a
+    reason (binary, too large, LFS pointer, submodule, vendored, generated, unsafe path,
+    untracked not approved, file limit); every changed skipped input raises a gap. Changed
+    files are kept first under the file limit. Case-only path collisions are reported.
+  - Hostile repositories: escaping symlinks, symlinked or special git metadata, unauthorised
+    gitfiles/common dirs (linked worktrees need explicit authorisation) and object alternates
+    are refused; FIFOs are never read.
+  - Diff context cites stored bytes with `\n`-based line numbers; deletion-only hunks cite the
+    base bytes. Snapshot bytes are stored as untrusted artefacts owned by the grant owner.
+  - `ultra-core`: `ManifestEntry.base_digest`, `Snapshot.gaps`, `GapKind::CaseCollision`;
+    manifest bounds raised to 50,000 entries / 200,000 skipped.
+  - `ultra-store` (security review): artefacts record the owner who stored them and evidence
+    may only cite its job owner's artefacts.
+- **Files changed:** `crates/ultra-repo/**` (new), `crates/ultra-core/src/types.rs`,
+  `crates/ultra-core/tests/contracts.rs`, `crates/ultra-store/src/{cas,migrations}.rs`,
+  `crates/ultra-store/tests/*`, `Cargo.toml`, `Cargo.lock`, `schemas/*`,
+  `vendor/manifests/toolchain.json`, `security/threat-model.md`, `AGENT.md`, `CHANGELOG.md`.
+- **Verification:** `cargo test --workspace --locked` 154/154 (ultra-repo 39); clippy
+  `-D warnings` clean; fmt clean; `audit-sources` 0 violations over 79 files. Mutation checks:
+  the hostile fixture fires both filter and fsmonitor under plain `git status`; the symlink and
+  alternates tests fail with their guards disabled; the owner-scoping test fails without its check.
+- **Follow-ups (deferred minors):** all `rev-parse` failures read as `BASE_UNAVAILABLE`; no retry on
+  errors inside a pass; untracked nested repositories are dropped silently; a FIFO named by
+  `core.excludesFile`/`include.path` stalls git for 60 s; `git rm --cached` files appear untracked;
+  git is not yet digest-pinned (T07).
+
+---
+
 Raouf: 2026-10-23 (Australia/Sydney) — T04 durable store
 - **Scope:** Plan task T04 (durable jobs, evidence blobs, ownership), its independent
   review fixes, and one post-commit security-review fix in `ultra-core`.

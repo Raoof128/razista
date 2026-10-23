@@ -155,17 +155,26 @@
       ]
     },
     "GapKind": {
-      "type": "string",
-      "enum": [
-        "language_unsupported",
-        "dependency_unavailable",
-        "verification_unavailable",
-        "scanner_unavailable",
-        "input_skipped",
-        "context_truncated",
-        "candidate_cap_reached",
-        "budget_exhausted",
-        "stage_failed"
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "language_unsupported",
+            "dependency_unavailable",
+            "verification_unavailable",
+            "scanner_unavailable",
+            "input_skipped",
+            "context_truncated",
+            "candidate_cap_reached",
+            "budget_exhausted",
+            "stage_failed"
+          ]
+        },
+        {
+          "description": "Paths that differ only by letter case; unsafe on case-insensitive volumes.",
+          "type": "string",
+          "const": "case_collision"
+        }
       ]
     },
     "RepoPath": {

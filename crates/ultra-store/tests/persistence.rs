@@ -157,7 +157,7 @@ fn artifact_round_trips_and_detects_tampering() {
     let store = open(&root, &clock);
     let bytes = b"pytest output: 1 failed";
     let id = store
-        .put_artifact(bytes, TrustLabel::ToolOutput)
+        .put_artifact(&anyone(), bytes, TrustLabel::ToolOutput)
         .expect("stored");
     assert_eq!(id, ArtifactId::from(Digest::of(bytes)));
     let (back, trust) = store.read_artifact_unscoped(&id).expect("read");
@@ -184,10 +184,10 @@ fn trust_label_cannot_be_laundered_by_reupload() {
     let store = open(&root, &clock);
     let bytes = b"same bytes";
     let id = store
-        .put_artifact(bytes, TrustLabel::Untrusted)
+        .put_artifact(&anyone(), bytes, TrustLabel::Untrusted)
         .expect("put");
     store
-        .put_artifact(bytes, TrustLabel::Trusted)
+        .put_artifact(&anyone(), bytes, TrustLabel::Trusted)
         .expect("re-put");
     assert_eq!(
         store.read_artifact_unscoped(&id).expect("read").1,
@@ -195,10 +195,10 @@ fn trust_label_cannot_be_laundered_by_reupload() {
     );
 
     let id = store
-        .put_artifact(b"tool bytes", TrustLabel::ToolOutput)
+        .put_artifact(&anyone(), b"tool bytes", TrustLabel::ToolOutput)
         .expect("put");
     store
-        .put_artifact(b"tool bytes", TrustLabel::ModelOutput)
+        .put_artifact(&anyone(), b"tool bytes", TrustLabel::ModelOutput)
         .expect("re-put");
     assert_eq!(
         store.read_artifact_unscoped(&id).expect("read").1,
@@ -224,7 +224,7 @@ fn evidence_requires_stored_artifacts() {
     assert_eq!(err.code(), ErrorCode::EvidenceInvalid);
 
     let real = store
-        .put_artifact(b"log", TrustLabel::ToolOutput)
+        .put_artifact(&setup.owner, b"log", TrustLabel::ToolOutput)
         .expect("put");
     let ev = evidence(setup.preparation.snapshot_id, vec![real]);
     store.put_evidence(job.job_id, &ev).expect("stored");
@@ -242,7 +242,7 @@ fn store_permissions_are_owner_only() {
         .create_job(request(&setup, "start-0001"))
         .expect("job");
     let id = store
-        .put_artifact(b"blob", TrustLabel::ToolOutput)
+        .put_artifact(&setup.owner, b"blob", TrustLabel::ToolOutput)
         .expect("put");
     store
         .append_event(job.job_id, stage_event(job.job_id, T0, JobStage::Snapshot))
@@ -307,7 +307,7 @@ fn finished_job_accepts_no_new_evidence() {
         .create_job(request(&setup, "start-0001"))
         .expect("job");
     let a = store
-        .put_artifact(b"late log", TrustLabel::ToolOutput)
+        .put_artifact(&setup.owner, b"late log", TrustLabel::ToolOutput)
         .expect("put");
     store
         .transition(job.job_id, JobStage::Reporting, JobState::Completed)
@@ -345,7 +345,7 @@ fn test_artifact_behind_evidence_must_exist() {
         .create_job(request(&setup, "start-0001"))
         .expect("job");
     let log = store
-        .put_artifact(b"log", TrustLabel::ToolOutput)
+        .put_artifact(&setup.owner, b"log", TrustLabel::ToolOutput)
         .expect("put");
     let mut ev = evidence(setup.preparation.snapshot_id, vec![log]);
     ev.action = Some(sandbox_request(

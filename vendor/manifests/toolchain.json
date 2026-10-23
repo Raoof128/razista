@@ -42,7 +42,30 @@
       "source": "https://crates.io/crates/yaml-rust2",
       "checksum": "see Cargo.lock",
       "used_by": "xtask audit-sources (CI workflow parsing)"
+    },
+    "rustix": {
+      "version": "1.1",
+      "license": "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT",
+      "checksum": "see Cargo.lock",
+      "used_by": "ultra-repo safe openat/O_NOFOLLOW working-tree reads (no first-party unsafe)"
+    },
+    "similar": {
+      "version": "2",
+      "license": "Apache-2.0",
+      "checksum": "see Cargo.lock",
+      "used_by": "ultra-repo line diffs"
+    },
+    "sha1": {
+      "version": "0.10",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "see Cargo.lock",
+      "used_by": "ultra-repo git object ids for SHA-1 repositories (identity, not security)"
     }
+  },
+  "git": {
+    "observed": "git version 2.56.0 (/opt/homebrew/bin/git)",
+    "minimum": "2.44 (needs --no-lazy-fetch and GIT_NO_LAZY_FETCH)",
+    "status": "third-party program invoked only through ultra-repo's hardened runner; not yet pinned by digest (T07 bundle)"
   },
   "inference_runtime": {
     "name": "llama.cpp",

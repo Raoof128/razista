@@ -46,6 +46,10 @@ operator's encrypted volume and OS account protection (design §18).
 | Unbound grant used as a wildcard | `run_preset`, `propose_patch` and `apply_patch` require grants bound to job, snapshot and scope digest. | `consequential_actions_require_fully_bound_grants` |
 | Another caller reads a job, its events or evidence | Store reads take the caller and return one uniform "not found or not owned" denial; artefact bytes are read only through evidence the caller owns. | `crates/ultra-store/tests/ownership.rs` |
 | A crash publishes half-written evidence, or a late worker rewrites a finished job | Blobs are published tmp → fsync → rename → dir fsync → row; recovery removes orphans; reads re-hash bytes; terminal jobs refuse transitions and new evidence; one process owns a store (lock file); SQLite uses WAL with full fsync. | `crates/ultra-store/tests/{persistence,recovery}.rs` |
+| A reviewed repository runs code through git (hooks, filters, textconv, fsmonitor, pager, credential/ssh helpers, external diff) or fetches | Git runs with a cleared environment, no global/system config, an empty HOME, forced `-c` overrides, `--no-lazy-fetch`, `protocol.allow=never` and no optional locks; only read-only plumbing is used and working-tree bytes are read by Rust, never via status/diff. Missing objects fail as `BASE_UNAVAILABLE`. | `git_filter_and_hook_never_execute`, `missing_base_never_fetches`, `partial_clone_missing_objects_are_not_misattributed` |
+| Hostile paths and git indirection read outside the repository | Working-tree reads walk with `openat(O_NOFOLLOW)` per component and open only regular files non-blocking; escaping symlinks, symlinked/special git metadata, unauthorised gitfiles/commondir and object alternates are refused. | `crates/ultra-repo/tests/paths.rs` |
+| Review alters the checkout or mixes concurrent edits | No git command writes; two-pass capture with one retry, then `SNAPSHOT_UNSTABLE`. | `review_does_not_change_checkout`, `concurrent_edit_cannot_mix_snapshots` |
+| An excluded input hides a changed file | Every tracked, base and untracked path is included or listed as skipped with a reason; every changed skipped input raises a gap. | `every_included_and_skipped_path_is_explained`, `changed_skipped_inputs_raise_visible_gaps` |
 | Silent denial | Every decision is a serialisable record naming caller, action, grant, policy digest, time and reason. | `every_denial_is_structured_and_auditable` |
 | Arbitrary commands via contracts | No contract has a command field; unknown fields are rejected by serde and by the generated JSON Schemas. | `unknown_command_field_is_rejected` (T02) |
 | Terminal escape injection via report text | `Text` refuses C0/C1 controls other than tab/newline at the boundary. | `bounded_strings_and_arrays` (T02) |
@@ -59,7 +63,6 @@ These are open and block the corresponding claims until their tasks land:
 - Network egress enforcement for inference, scanners and workers (T05, T07, T08, T22).
   Until then **no offline guarantee is made**.
 - Execution isolation (T05). Until then no repository code or generated test runs.
-- Safe snapshots: hooks, filters, symlinks, `.git` indirection, concurrent edits (T06).
 - Ownership checks at the MCP adapter boundary and across reconnections (T18, T19). The
   store enforces ownership for jobs, events, evidence, grants, repositories and preparations (T04).
 - Cache poisoning across jobs (T09, T16).

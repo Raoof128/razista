@@ -144,3 +144,8 @@ pub fn sandbox_request(snapshot: SnapshotId, test: ArtifactId) -> ultra_core::Sa
         },
     }
 }
+
+/// A caller with no other role in the test (artefacts must name who stored them).
+pub fn anyone() -> CallerId {
+    CallerId::new()
+}

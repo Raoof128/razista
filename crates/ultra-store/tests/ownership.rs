@@ -22,7 +22,7 @@ fn cross_caller_read_is_denied() {
         .append_event(job.job_id, stage_event(job.job_id, T0, JobStage::Snapshot))
         .expect("event");
     let a = store
-        .put_artifact(b"log", TrustLabel::ToolOutput)
+        .put_artifact(&setup.owner, b"log", TrustLabel::ToolOutput)
         .expect("put");
     let ev = evidence(setup.preparation.snapshot_id, vec![a.clone()]);
     store.put_evidence(job.job_id, &ev).expect("evidence");
@@ -72,10 +72,10 @@ fn artifact_not_linked_to_evidence_cannot_be_read_through_it() {
         .create_job(request(&setup, "start-0001"))
         .expect("job");
     let mine = store
-        .put_artifact(b"mine", TrustLabel::ToolOutput)
+        .put_artifact(&setup.owner, b"mine", TrustLabel::ToolOutput)
         .expect("put");
     let other = store
-        .put_artifact(b"another job's log", TrustLabel::ToolOutput)
+        .put_artifact(&setup.owner, b"another job's log", TrustLabel::ToolOutput)
         .expect("put");
     let ev = evidence(setup.preparation.snapshot_id, vec![mine]);
     store.put_evidence(job.job_id, &ev).expect("evidence");
@@ -161,4 +161,48 @@ fn grants_are_loaded_only_by_their_caller() {
     hijack.caller = CallerId::new();
     let err = store.put_grant(&hijack).expect_err("ids are write-once");
     assert_eq!(err.code(), ErrorCode::InvalidInput);
+}
+
+#[test]
+fn evidence_cannot_link_another_owners_artifact() {
+    // Security review: knowing a digest must not let a job cite bytes that
+    // only another owner stored (cross-tenant confused deputy).
+    let (_tmp, root) = temp_root();
+    let clock = FakeClock::at(T0);
+    let store = open(&root, &clock);
+    let victim = prepared(&store);
+    let attacker = prepared(&store);
+    let secret = store
+        .put_artifact(
+            &victim.owner,
+            b"victim's private log",
+            TrustLabel::ToolOutput,
+        )
+        .expect("victim stores");
+
+    let job = store
+        .create_job(request(&attacker, "start-0001"))
+        .expect("attacker job");
+    let err = store
+        .put_evidence(
+            job.job_id,
+            &evidence(attacker.preparation.snapshot_id, vec![secret.clone()]),
+        )
+        .expect_err("not the attacker's artefact");
+    assert_eq!(err.code(), ErrorCode::PolicyDenied);
+
+    // If the attacker's own run produced the same bytes, citing them is fine.
+    store
+        .put_artifact(
+            &attacker.owner,
+            b"victim's private log",
+            TrustLabel::ToolOutput,
+        )
+        .expect("attacker stores identical bytes");
+    store
+        .put_evidence(
+            job.job_id,
+            &evidence(attacker.preparation.snapshot_id, vec![secret]),
+        )
+        .expect("own copy may be cited");
 }

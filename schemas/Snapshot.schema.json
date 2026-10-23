@@ -6,6 +6,14 @@
     "consistency_evidence": {
       "$ref": "#/$defs/ConsistencyEvidence"
     },
+    "gaps": {
+      "description": "Everything the capture could not include or wants the reader to know.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/CoverageGap"
+      },
+      "maxItems": 1000
+    },
     "manifest": {
       "$ref": "#/$defs/SnapshotManifest"
     },
@@ -25,7 +33,8 @@
     "repo_id",
     "resolved_scope",
     "manifest",
-    "consistency_evidence"
+    "consistency_evidence",
+    "gaps"
   ],
   "$defs": {
     "ChangeKind": {
@@ -58,9 +67,86 @@
         "manifest_digest"
       ]
     },
+    "CoverageGap": {
+      "description": "A visible statement of what was not reviewed or not verified (R09).",
+      "type": "object",
+      "properties": {
+        "code": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ErrorCode"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "detail": {
+          "type": "string",
+          "maxLength": 1024,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        },
+        "kind": {
+          "$ref": "#/$defs/GapKind"
+        },
+        "subject": {
+          "type": "string",
+          "maxLength": 512,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "subject",
+        "detail"
+      ]
+    },
     "Digest": {
       "type": "string",
       "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "ErrorCode": {
+      "description": "Stable error codes. Every code declares whether a retry may succeed and\nwhat it does to review coverage, so a failure is never reported as a pass.",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "BASE_UNAVAILABLE",
+            "SNAPSHOT_UNSTABLE",
+            "POLICY_DENIED",
+            "SANDBOX_UNAVAILABLE",
+            "EGRESS_POLICY_UNVERIFIED",
+            "DEPENDENCY_UNAVAILABLE",
+            "LANGUAGE_UNSUPPORTED",
+            "MODEL_NOT_INSTALLED",
+            "MODEL_OUTPUT_INVALID",
+            "OUT_OF_MEMORY",
+            "BUDGET_EXHAUSTED",
+            "WORKER_TIMEOUT",
+            "EVIDENCE_INVALID",
+            "STALE_PATCH",
+            "STORE_UNAVAILABLE"
+          ]
+        },
+        {
+          "description": "An idempotency key was reused with different inputs.",
+          "type": "string",
+          "const": "IDEMPOTENCY_CONFLICT"
+        },
+        {
+          "description": "A terminal job was asked to change; terminal jobs are immutable.",
+          "type": "string",
+          "const": "JOB_TERMINAL"
+        },
+        {
+          "description": "Input failed contract validation (bounds, enums, unknown fields, config).",
+          "type": "string",
+          "const": "INVALID_INPUT"
+        }
+      ]
     },
     "FileMode": {
       "type": "string",
@@ -70,14 +156,49 @@
         "symlink"
       ]
     },
+    "GapKind": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "language_unsupported",
+            "dependency_unavailable",
+            "verification_unavailable",
+            "scanner_unavailable",
+            "input_skipped",
+            "context_truncated",
+            "candidate_cap_reached",
+            "budget_exhausted",
+            "stage_failed"
+          ]
+        },
+        {
+          "description": "Paths that differ only by letter case; unsafe on case-insensitive volumes.",
+          "type": "string",
+          "const": "case_collision"
+        }
+      ]
+    },
     "ManifestEntry": {
       "description": "One included file, identified by its reviewed bytes.",
       "type": "object",
       "properties": {
+        "base_digest": {
+          "description": "Digest of the base-side bytes (the same path, or the rename source) for\na `modified` or `renamed` entry; `None` otherwise. Lets diffs be rebuilt\nfrom stored blobs.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "change": {
           "$ref": "#/$defs/ChangeKind"
         },
         "digest": {
+          "description": "Digest of the reviewed bytes (for a deletion: the bytes that were deleted).",
           "$ref": "#/$defs/Digest"
         },
         "line_count": {
@@ -240,14 +361,14 @@
           "items": {
             "$ref": "#/$defs/ManifestEntry"
           },
-          "maxItems": 20000
+          "maxItems": 50000
         },
         "skipped": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/SkippedInput"
           },
-          "maxItems": 20000
+          "maxItems": 200000
         }
       },
       "additionalProperties": false,
