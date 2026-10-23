@@ -909,3 +909,43 @@ fn doctor_survives_bad_inputs_and_large_bundles() {
     let report = doctor(Some(&ws.root.join("big")), T0);
     assert!(rows(&report, CapabilityComponent::Packages).len() >= 300);
 }
+
+// ---------- security review of the published commit ------------------------
+
+#[test]
+fn prepare_ignores_a_pre_planted_staging_directory() {
+    // An attacker who can write to the output's parent pre-creates the old
+    // predictable staging name with a planted file; it must not end up in
+    // (or be used as) the bundle.
+    let ws = Workspace::new();
+    for pid_guess in [std::process::id(), 0, 1] {
+        let planted = ws.root.join(format!(".bundle.partial-{pid_guess}"));
+        std::fs::create_dir_all(planted.join("model_weights/m")).expect("plant");
+        std::fs::write(planted.join("model_weights/m/evil.gguf"), b"planted").expect("plant");
+    }
+    let s = source(
+        "m",
+        BundleKind::ModelWeights,
+        ws.file("in/m.gguf", b"genuine"),
+    );
+    prepare_one(&ws, "bundle", s, vec![]).expect("prepared");
+    let bundle = ws.root.join("bundle");
+    assert!(
+        !bundle.join("model_weights/m/evil.gguf").exists(),
+        "planted file in bundle"
+    );
+    assert_eq!(
+        std::fs::read(bundle.join("model_weights/m/m.gguf")).expect("genuine copy"),
+        b"genuine"
+    );
+}
+
+#[test]
+fn bundle_root_that_is_a_symlink_is_refused() {
+    let ws = Workspace::new();
+    let real = full_bundle(&ws);
+    let link = ws.root.join("linked-bundle");
+    std::os::unix::fs::symlink(&real, &link).expect("link");
+    let err = load_manifest(&link).expect_err("symlinked bundle root");
+    assert_eq!(err.code(), ErrorCode::PolicyDenied);
+}

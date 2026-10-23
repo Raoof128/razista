@@ -4,6 +4,24 @@ All notable changes to Razista, a local evidence-gated code review engine with a
 
 ---
 
+Raouf: 2026-10-23 (Australia/Sydney) — fix bundle staging poisoning
+- **Scope:** Security fix from the automated review of the first public push.
+- **Summary:** `razista prepare` built bundles in a staging directory with a predictable name
+  (`.NAME.partial-PID`) created recursively, so anyone able to write to the output's parent
+  could pre-create it and plant files that ended up in the bundle (reproduced by a test). The
+  staging directory is now created exclusively with a random name and mode 0700
+  (`tempfile::Builder::tempdir_in`). `load_manifest` refuses a bundle root that is a symlink or
+  is owned by another user.
+- **Files changed:** `crates/razista-cli/{Cargo.toml,src/prepare.rs,tests/cli.rs}`, `Cargo.toml`,
+  `Cargo.lock`, `CHANGELOG.md`, `AGENT.md`.
+- **Verification:** `prepare_ignores_a_pre_planted_staging_directory` and
+  `bundle_root_that_is_a_symlink_is_refused` failed first, then passed; `cargo test --workspace
+  --locked` 188/188; clippy/fmt clean; audit 0 violations. First public CI run on `main`
+  (2f53799) passed.
+- **Follow-ups:** none new.
+
+---
+
 Raouf: 2026-10-23 (Australia/Sydney) — first public publication
 - **Scope:** Publish the repository publicly on GitHub.
 - **Summary:** Created the public repository https://github.com/Raoof128/razista and pushed

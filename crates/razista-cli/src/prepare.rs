@@ -265,28 +265,21 @@ pub fn prepare_bundle(request: &PrepareRequest, now: Timestamp) -> Result<Bundle
     let parent = out_dir
         .parent()
         .ok_or_else(|| ReviewError::invalid("bundle output has no parent directory"))?;
-    let staging = parent.join(format!(
-        ".{}.partial-{}",
-        out_dir
-            .file_name()
-            .map(|n| n.to_string_lossy().into_owned())
-            .unwrap_or_default(),
-        std::process::id()
-    ));
-    let result = build_bundle(&staging, opened, now);
-    match result {
-        Ok(manifest) => {
-            if let Err(e) = fs::rename(&staging, &out_dir) {
-                let _ = fs::remove_dir_all(&staging);
-                return Err(io_err(e));
-            }
-            Ok(manifest)
-        }
-        Err(e) => {
-            let _ = fs::remove_dir_all(&staging);
-            Err(e)
-        }
-    }
+    // Created exclusively with an unpredictable name and mode 0700, so nothing
+    // another user pre-created or linked at a guessable path can be adopted.
+    let name = out_dir
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    let staging = tempfile::Builder::new()
+        .prefix(&format!(".{name}.partial-"))
+        .tempdir_in(parent)
+        .map_err(io_err)?;
+    let manifest = build_bundle(staging.path(), opened, now)?;
+    fs::rename(staging.path(), &out_dir).map_err(io_err)?;
+    // The directory now lives at `out_dir`; do not delete anything later.
+    let _ = staging.keep();
+    Ok(manifest)
 }
 
 fn build_bundle(
@@ -294,7 +287,6 @@ fn build_bundle(
     opened: Vec<(&PrepareSource, fs::File, RepoPath)>,
     now: Timestamp,
 ) -> Result<BundleManifest> {
-    make_private_dir(staging)?;
     let mut entries = Vec::with_capacity(opened.len());
     for (s, file, rel) in opened {
         let dest = staging.join(Path::new(
@@ -410,6 +402,7 @@ fn open_bundle_file(root: &Path, rel: &Path) -> std::result::Result<fs::File, &'
 
 /// Read and parse `<dir>/bundle.json`.
 pub fn load_manifest(dir: &Path) -> Result<BundleManifest> {
+    check_bundle_root(dir)?;
     let file = open_bundle_file(dir, Path::new(MANIFEST_FILE)).map_err(|why| {
         ReviewError::new(
             ErrorCode::DependencyUnavailable,
@@ -574,4 +567,38 @@ pub fn validate_bundle(
         components: BoundedVec::new(components)?,
         languages: BoundedVec::empty(),
     })
+}
+
+/// A bundle root must be a real directory (not a link) owned by the user
+/// running the engine, so a bundle cannot be swapped in from elsewhere.
+fn check_bundle_root(dir: &Path) -> Result<()> {
+    let meta = fs::symlink_metadata(dir).map_err(|e| {
+        ReviewError::new(
+            ErrorCode::DependencyUnavailable,
+            format!("bundle {}: {e}", dir.display()),
+        )
+    })?;
+    if meta.file_type().is_symlink() {
+        return Err(denied(format!(
+            "bundle root {} is a symbolic link; refusing to follow it",
+            dir.display()
+        )));
+    }
+    if !meta.is_dir() {
+        return Err(ReviewError::invalid(format!(
+            "bundle root {} is not a directory",
+            dir.display()
+        )));
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        if meta.uid() != rustix::process::geteuid().as_raw() {
+            return Err(denied(format!(
+                "bundle root {} is owned by another user",
+                dir.display()
+            )));
+        }
+    }
+    Ok(())
 }

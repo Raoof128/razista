@@ -155,3 +155,12 @@ Raouf: 2026-10-23 (Australia/Sydney) — first public publication
   - No licence has been chosen yet (`UNLICENSED`); do not add one without the owner's decision.
 - Verification: remote `main` matches local `main` after push.
 - Follow-ups: licence decision; README; T05/T08/T09.
+
+---
+
+Raouf: 2026-10-23 (Australia/Sydney) — fix bundle staging poisoning
+- Scope: `razista prepare` staging directory and bundle-root checks.
+- Rule for agents: never create a working directory at a predictable path in a shared parent;
+  use `tempfile::Builder::tempdir_in` (exclusive, random, 0700) and rename into place. Refuse
+  inputs (bundles, stores) whose root is a symlink or owned by another user.
+- Verification: `cargo test --workspace --locked` 188/188; CI on `main` passed.
