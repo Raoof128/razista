@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Action",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "$ref": "#/$defs/ActionKind"
+    },
+    "target": {
+      "$ref": "#/$defs/ActionTarget"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "target"
+  ],
+  "$defs": {
+    "ActionKind": {
+      "description": "The closed set of review actions. Network access and installation are not\nreview actions and cannot be granted.",
+      "type": "string",
+      "enum": [
+        "read_snapshot",
+        "read_context",
+        "run_preset",
+        "generate_report",
+        "propose_patch",
+        "apply_patch"
+      ]
+    },
+    "ActionTarget": {
+      "description": "What an action touches. Grants are checked against every bound field.",
+      "type": "object",
+      "properties": {
+        "job_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/JobId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "repo_id": {
+          "$ref": "#/$defs/RepoId"
+        },
+        "scope_digest": {
+          "description": "Digest of the approved `ResolvedScope`.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "snapshot_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SnapshotId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "repo_id"
+      ]
+    },
+    "Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "JobId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "RepoId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "SnapshotId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    }
+  }
+}

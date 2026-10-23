@@ -1,0 +1,212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CapabilityReport",
+  "type": "object",
+  "properties": {
+    "components": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Capability"
+      },
+      "maxItems": 256
+    },
+    "hardware": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/HardwareProfile"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/LanguageCapability"
+      },
+      "maxItems": 64
+    },
+    "offline_certified": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "offline_certified",
+    "components",
+    "languages"
+  ],
+  "$defs": {
+    "Capability": {
+      "type": "object",
+      "properties": {
+        "component": {
+          "$ref": "#/$defs/CapabilityComponent"
+        },
+        "detail": {
+          "type": "string",
+          "maxLength": 1024,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        },
+        "name": {
+          "$ref": "#/$defs/Ident"
+        },
+        "status": {
+          "$ref": "#/$defs/CapabilityStatus"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "component",
+        "name",
+        "status",
+        "detail"
+      ]
+    },
+    "CapabilityComponent": {
+      "type": "string",
+      "enum": [
+        "model",
+        "inference_runtime",
+        "sandbox",
+        "egress",
+        "compiler",
+        "packages",
+        "scanner",
+        "store"
+      ]
+    },
+    "CapabilityStatus": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "missing",
+            "unsupported"
+          ]
+        },
+        {
+          "description": "Present and its self-test passed.",
+          "type": "string",
+          "const": "ready"
+        },
+        {
+          "description": "Present but not certified (e.g. an unmanaged localhost endpoint).",
+          "type": "string",
+          "const": "unverified"
+        }
+      ]
+    },
+    "HardwareProfile": {
+      "type": "object",
+      "properties": {
+        "accelerator": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        },
+        "arch": {
+          "$ref": "#/$defs/Ident"
+        },
+        "cpu": {
+          "type": "string",
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        },
+        "logical_cpus": {
+          "type": "integer",
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0
+        },
+        "memory_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "os": {
+          "type": "string",
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "os",
+        "arch",
+        "cpu",
+        "logical_cpus",
+        "memory_bytes"
+      ]
+    },
+    "Ident": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+    },
+    "Language": {
+      "type": "string",
+      "enum": [
+        "python",
+        "type_script",
+        "java_script",
+        "rust",
+        "go",
+        "java",
+        "kotlin",
+        "c",
+        "cpp",
+        "c_sharp",
+        "php",
+        "ruby",
+        "dart",
+        "swift",
+        "sql",
+        "terraform",
+        "yaml",
+        "dockerfile",
+        "shell"
+      ]
+    },
+    "LanguageCapability": {
+      "description": "Per-language support, reported per capability rather than as one badge (R20).",
+      "type": "object",
+      "properties": {
+        "analyse": {
+          "type": "boolean"
+        },
+        "context": {
+          "type": "boolean"
+        },
+        "execute": {
+          "type": "boolean"
+        },
+        "language": {
+          "$ref": "#/$defs/Language"
+        },
+        "parse": {
+          "type": "boolean"
+        },
+        "verify": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "language",
+        "parse",
+        "context",
+        "analyse",
+        "execute",
+        "verify"
+      ]
+    }
+  }
+}

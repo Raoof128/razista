@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "recorded": "2026-10-23",
+  "sdk": { "name": "rmcp", "version": "3.7.0" },
+  "probe": "crates/ultra-mcp/tests/protocol_probe.rs",
+  "protocol_revisions": {
+    "2026-07-28": {
+      "status": "probe-passing",
+      "verified": [
+        "server/discover returns supportedVersions with 2026-07-28 and 2025-11-25",
+        "discovery result carries resultType=complete, ttlMs and cacheScope",
+        "tools/list and tools/call require per-request _meta; missing metadata -> -32602",
+        "ordinary results carry resultType=complete",
+        "tool inputSchema has additionalProperties=false and maxLength from schemars",
+        "unknown tool argument is rejected, not ignored"
+      ]
+    },
+    "2025-11-25": {
+      "status": "probe-passing",
+      "verified": [
+        "initialize negotiates protocolVersion 2025-11-25",
+        "tools/list and tools/call round-trip after notifications/initialized",
+        "results keep the legacy wire shape without resultType"
+      ]
+    }
+  },
+  "clients": [],
+  "clients_note": "No real MCP client versions tested yet. T18 records exact client versions against non-sensitive fixtures; until then compatibility is claimed for the SDK probe only."
+}

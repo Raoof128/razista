@@ -1,0 +1,271 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Event",
+  "type": "object",
+  "properties": {
+    "at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "id": {
+      "$ref": "#/$defs/EventId"
+    },
+    "job_id": {
+      "$ref": "#/$defs/JobId"
+    },
+    "kind": {
+      "$ref": "#/$defs/EventKind"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "job_id",
+    "at",
+    "kind"
+  ],
+  "$defs": {
+    "CoverageGap": {
+      "description": "A visible statement of what was not reviewed or not verified (R09).",
+      "type": "object",
+      "properties": {
+        "code": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ErrorCode"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "detail": {
+          "type": "string",
+          "maxLength": 1024,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        },
+        "kind": {
+          "$ref": "#/$defs/GapKind"
+        },
+        "subject": {
+          "type": "string",
+          "maxLength": 512,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "subject",
+        "detail"
+      ]
+    },
+    "ErrorCode": {
+      "description": "Stable error codes. Every code declares whether a retry may succeed and\nwhat it does to review coverage, so a failure is never reported as a pass.",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "BASE_UNAVAILABLE",
+            "SNAPSHOT_UNSTABLE",
+            "POLICY_DENIED",
+            "SANDBOX_UNAVAILABLE",
+            "EGRESS_POLICY_UNVERIFIED",
+            "DEPENDENCY_UNAVAILABLE",
+            "LANGUAGE_UNSUPPORTED",
+            "MODEL_NOT_INSTALLED",
+            "MODEL_OUTPUT_INVALID",
+            "OUT_OF_MEMORY",
+            "BUDGET_EXHAUSTED",
+            "WORKER_TIMEOUT",
+            "EVIDENCE_INVALID",
+            "STALE_PATCH",
+            "STORE_UNAVAILABLE"
+          ]
+        },
+        {
+          "description": "Input failed contract validation (bounds, enums, unknown fields, config).",
+          "type": "string",
+          "const": "INVALID_INPUT"
+        }
+      ]
+    },
+    "EventId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "EventKind": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "stage": {
+              "$ref": "#/$defs/JobStage"
+            },
+            "type": {
+              "type": "string",
+              "const": "stage_entered"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "stage"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "state": {
+              "$ref": "#/$defs/JobState"
+            },
+            "type": {
+              "type": "string",
+              "const": "state_changed"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "state"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "gap": {
+              "$ref": "#/$defs/CoverageGap"
+            },
+            "type": {
+              "type": "string",
+              "const": "gap_recorded"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "gap"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "hypothesis_id": {
+              "$ref": "#/$defs/HypothesisId"
+            },
+            "type": {
+              "type": "string",
+              "const": "hypothesis_recorded"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "hypothesis_id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "verification_recorded"
+            },
+            "verification_id": {
+              "$ref": "#/$defs/VerificationId"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "verification_id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "code": {
+              "$ref": "#/$defs/ErrorCode"
+            },
+            "detail": {
+              "type": "string",
+              "maxLength": 1024,
+              "minLength": 1,
+              "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+            },
+            "type": {
+              "type": "string",
+              "const": "action_denied"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "code",
+            "detail"
+          ]
+        }
+      ]
+    },
+    "GapKind": {
+      "type": "string",
+      "enum": [
+        "language_unsupported",
+        "dependency_unavailable",
+        "verification_unavailable",
+        "scanner_unavailable",
+        "input_skipped",
+        "context_truncated",
+        "candidate_cap_reached",
+        "budget_exhausted",
+        "stage_failed"
+      ]
+    },
+    "HypothesisId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "JobId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "JobStage": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "preflight",
+        "snapshot",
+        "indexing",
+        "scanning",
+        "discovering",
+        "verifying",
+        "adjudicating",
+        "reporting"
+      ]
+    },
+    "JobState": {
+      "description": "Lifecycle state. `Completed`, `Partial`, `Failed` and `Cancelled` are terminal.",
+      "type": "string",
+      "enum": [
+        "queued",
+        "running",
+        "input_required",
+        "completed",
+        "partial",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "Timestamp": {
+      "description": "Milliseconds since the Unix epoch (UTC).",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0
+    },
+    "VerificationId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    }
+  }
+}

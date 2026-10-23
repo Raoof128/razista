@@ -1,0 +1,282 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ModelRequest",
+  "type": "object",
+  "properties": {
+    "max_output_tokens": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
+    },
+    "packet": {
+      "$ref": "#/$defs/ContextPacket"
+    },
+    "prompt_id": {
+      "$ref": "#/$defs/Ident"
+    },
+    "prompt_version": {
+      "$ref": "#/$defs/Ident"
+    },
+    "response_schema": {
+      "$ref": "#/$defs/Ident"
+    },
+    "role": {
+      "$ref": "#/$defs/RoleKind"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "role",
+    "prompt_id",
+    "prompt_version",
+    "response_schema",
+    "packet",
+    "max_output_tokens"
+  ],
+  "$defs": {
+    "ContextItem": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "$ref": "#/$defs/SourceText"
+        },
+        "provenance": {
+          "$ref": "#/$defs/ContextProvenance"
+        },
+        "span": {
+          "$ref": "#/$defs/SourceSpan"
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "trust": {
+          "$ref": "#/$defs/TrustLabel"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "span",
+        "trust",
+        "provenance",
+        "content",
+        "truncated"
+      ]
+    },
+    "ContextPacket": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContextItem"
+          },
+          "maxItems": 512
+        },
+        "omitted": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CoverageGap"
+          },
+          "maxItems": 256
+        },
+        "snapshot_id": {
+          "$ref": "#/$defs/SnapshotId"
+        },
+        "token_estimate": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "snapshot_id",
+        "items",
+        "omitted",
+        "token_estimate"
+      ]
+    },
+    "ContextProvenance": {
+      "description": "How a context relationship was obtained. Compiler facts and syntactic\nguesses stay distinguishable.",
+      "type": "string",
+      "enum": [
+        "diff",
+        "syntactic",
+        "compiler",
+        "existing_test",
+        "requested"
+      ]
+    },
+    "CoverageGap": {
+      "description": "A visible statement of what was not reviewed or not verified (R09).",
+      "type": "object",
+      "properties": {
+        "code": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ErrorCode"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "detail": {
+          "type": "string",
+          "maxLength": 1024,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        },
+        "kind": {
+          "$ref": "#/$defs/GapKind"
+        },
+        "subject": {
+          "type": "string",
+          "maxLength": 512,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "subject",
+        "detail"
+      ]
+    },
+    "Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "ErrorCode": {
+      "description": "Stable error codes. Every code declares whether a retry may succeed and\nwhat it does to review coverage, so a failure is never reported as a pass.",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "BASE_UNAVAILABLE",
+            "SNAPSHOT_UNSTABLE",
+            "POLICY_DENIED",
+            "SANDBOX_UNAVAILABLE",
+            "EGRESS_POLICY_UNVERIFIED",
+            "DEPENDENCY_UNAVAILABLE",
+            "LANGUAGE_UNSUPPORTED",
+            "MODEL_NOT_INSTALLED",
+            "MODEL_OUTPUT_INVALID",
+            "OUT_OF_MEMORY",
+            "BUDGET_EXHAUSTED",
+            "WORKER_TIMEOUT",
+            "EVIDENCE_INVALID",
+            "STALE_PATCH",
+            "STORE_UNAVAILABLE"
+          ]
+        },
+        {
+          "description": "Input failed contract validation (bounds, enums, unknown fields, config).",
+          "type": "string",
+          "const": "INVALID_INPUT"
+        }
+      ]
+    },
+    "GapKind": {
+      "type": "string",
+      "enum": [
+        "language_unsupported",
+        "dependency_unavailable",
+        "verification_unavailable",
+        "scanner_unavailable",
+        "input_skipped",
+        "context_truncated",
+        "candidate_cap_reached",
+        "budget_exhausted",
+        "stage_failed"
+      ]
+    },
+    "Ident": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+    },
+    "RepoPath": {
+      "description": "Repository-relative path; '%', control characters and invalid UTF-8 bytes are %XX-escaped. '.'/'..' components are rejected by the engine.",
+      "type": "string",
+      "maxLength": 12288,
+      "minLength": 1,
+      "pattern": "^[^/\\x00-\\x1F\\x7F-\\x9F][^\\x00-\\x1F\\x7F-\\x9F]*$"
+    },
+    "RoleKind": {
+      "type": "string",
+      "enum": [
+        "correctness",
+        "security",
+        "contracts",
+        "state_concurrency",
+        "performance_resources",
+        "tests_regressions",
+        "verifier",
+        "challenger"
+      ]
+    },
+    "SnapshotId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "SourceSpan": {
+      "description": "A cited range of reviewed bytes. Lines are 1-based and inclusive.",
+      "type": "object",
+      "properties": {
+        "end_line": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "file_digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "path": {
+          "$ref": "#/$defs/RepoPath"
+        },
+        "start_line": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "file_digest",
+        "start_line",
+        "end_line"
+      ]
+    },
+    "SourceText": {
+      "type": "string",
+      "maxLength": 262144
+    },
+    "TrustLabel": {
+      "description": "Provenance label carried with every piece of context and output.",
+      "oneOf": [
+        {
+          "description": "Engine-generated or operator-approved configuration.",
+          "type": "string",
+          "const": "trusted"
+        },
+        {
+          "description": "Reviewed repository content, including comments and docs.",
+          "type": "string",
+          "const": "untrusted"
+        },
+        {
+          "description": "Output of a third-party tool or code under test.",
+          "type": "string",
+          "const": "tool_output"
+        },
+        {
+          "description": "Output of a model.",
+          "type": "string",
+          "const": "model_output"
+        }
+      ]
+    }
+  }
+}

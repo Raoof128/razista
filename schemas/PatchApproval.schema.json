@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PatchApproval",
+  "description": "A local human's approval of one exact proposal. Minted only by the local\nauthority (T20), never by a model or an MCP tool argument.",
+  "type": "object",
+  "properties": {
+    "approved_by": {
+      "$ref": "#/$defs/CallerId"
+    },
+    "expires_at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "patch_digest": {
+      "$ref": "#/$defs/Digest"
+    },
+    "preconditions_digest": {
+      "$ref": "#/$defs/Digest"
+    },
+    "proposal_id": {
+      "$ref": "#/$defs/ProposalId"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "proposal_id",
+    "patch_digest",
+    "preconditions_digest",
+    "approved_by",
+    "expires_at"
+  ],
+  "$defs": {
+    "CallerId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "ProposalId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "Timestamp": {
+      "description": "Milliseconds since the Unix epoch (UTC).",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0
+    }
+  }
+}

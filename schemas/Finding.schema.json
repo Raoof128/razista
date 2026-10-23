@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Finding",
+  "type": "object",
+  "properties": {
+    "claim": {
+      "type": "string",
+      "maxLength": 1024,
+      "minLength": 1,
+      "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+    },
+    "discovered_by": {
+      "$ref": "#/$defs/AgentId"
+    },
+    "evidence_class": {
+      "$ref": "#/$defs/EvidenceClass"
+    },
+    "hypothesis_id": {
+      "description": "The hypothesis this finding publishes. Every cited verification must be of it.",
+      "$ref": "#/$defs/HypothesisId"
+    },
+    "id": {
+      "$ref": "#/$defs/FindingId"
+    },
+    "impact": {
+      "type": "string",
+      "maxLength": 1024,
+      "minLength": 1,
+      "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+    },
+    "introduced_by_change": {
+      "$ref": "#/$defs/ChangeAttribution"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 1024,
+        "minLength": 1,
+        "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+      },
+      "maxItems": 16
+    },
+    "locations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/SourceSpan"
+      },
+      "maxItems": 16
+    },
+    "reproduction_summary": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 1024,
+      "minLength": 1,
+      "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+    },
+    "severity": {
+      "$ref": "#/$defs/Severity"
+    },
+    "verification_ids": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/VerificationId"
+      },
+      "maxItems": 8
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "hypothesis_id",
+    "claim",
+    "severity",
+    "evidence_class",
+    "introduced_by_change",
+    "discovered_by",
+    "locations",
+    "verification_ids",
+    "impact",
+    "limitations"
+  ],
+  "$defs": {
+    "AgentId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "ChangeAttribution": {
+      "description": "Whether the reviewed change introduced the problem.",
+      "type": "string",
+      "enum": [
+        "introduced_by_change",
+        "pre_existing",
+        "unknown"
+      ]
+    },
+    "Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "EvidenceClass": {
+      "description": "What the evidence establishes (design §11). Separate from [`Severity`].",
+      "oneOf": [
+        {
+          "description": "Supervisor-observed execution violates a sourced behavioural contract.",
+          "type": "string",
+          "const": "runtime_reproduced"
+        },
+        {
+          "description": "A pinned analyser/compiler independently reproduces a diagnostic.",
+          "type": "string",
+          "const": "deterministic_diagnostic"
+        },
+        {
+          "description": "A checkable argument under explicit assumptions and bounds.",
+          "type": "string",
+          "const": "bounded_static_proof"
+        },
+        {
+          "description": "Plausible but not established.",
+          "type": "string",
+          "const": "unverified"
+        },
+        {
+          "description": "Evidence contradicts the claim.",
+          "type": "string",
+          "const": "disproved"
+        },
+        {
+          "description": "Conflicting, flaky, budget-exhausted or oracle-inadequate.",
+          "type": "string",
+          "const": "inconclusive"
+        }
+      ]
+    },
+    "FindingId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "HypothesisId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "RepoPath": {
+      "description": "Repository-relative path; '%', control characters and invalid UTF-8 bytes are %XX-escaped. '.'/'..' components are rejected by the engine.",
+      "type": "string",
+      "maxLength": 12288,
+      "minLength": 1,
+      "pattern": "^[^/\\x00-\\x1F\\x7F-\\x9F][^\\x00-\\x1F\\x7F-\\x9F]*$"
+    },
+    "Severity": {
+      "description": "Impact if the claim holds. Independent of how certain the claim is.",
+      "type": "string",
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ]
+    },
+    "SourceSpan": {
+      "description": "A cited range of reviewed bytes. Lines are 1-based and inclusive.",
+      "type": "object",
+      "properties": {
+        "end_line": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "file_digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "path": {
+          "$ref": "#/$defs/RepoPath"
+        },
+        "start_line": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "file_digest",
+        "start_line",
+        "end_line"
+      ]
+    },
+    "VerificationId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    }
+  }
+}

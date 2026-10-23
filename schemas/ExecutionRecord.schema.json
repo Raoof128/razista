@@ -1,0 +1,312 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ExecutionRecord",
+  "type": "object",
+  "properties": {
+    "duration_ms": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0
+    },
+    "environment_digest": {
+      "$ref": "#/$defs/Digest"
+    },
+    "outcome": {
+      "$ref": "#/$defs/ExecutionOutcome"
+    },
+    "output_truncated": {
+      "type": "boolean"
+    },
+    "request": {
+      "$ref": "#/$defs/SandboxRequest"
+    },
+    "stderr": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ArtifactId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "stdout": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ArtifactId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "supervisor": {
+      "$ref": "#/$defs/AgentId"
+    },
+    "usage": {
+      "$ref": "#/$defs/ResourceUsage"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "request",
+    "outcome",
+    "supervisor",
+    "output_truncated",
+    "duration_ms",
+    "usage",
+    "environment_digest"
+  ],
+  "$defs": {
+    "AgentId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "ArtifactId": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "ExecutionLimits": {
+      "type": "object",
+      "properties": {
+        "cpu_millis": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "disk_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "memory_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "output_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "processes": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "wall_time_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "cpu_millis",
+        "memory_bytes",
+        "wall_time_ms",
+        "output_bytes",
+        "processes",
+        "disk_bytes"
+      ]
+    },
+    "ExecutionOutcome": {
+      "description": "Outcome as observed by the supervisor, never as printed by the workload.",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "kind": {
+              "type": "string",
+              "const": "exited"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "code"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "signalled"
+            },
+            "signal": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "signal"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "timed_out"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "output_limit"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "resource_limit"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "sandbox_failure"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ]
+        }
+      ]
+    },
+    "Ident": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+    },
+    "ResourceUsage": {
+      "type": "object",
+      "properties": {
+        "completion_tokens": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "cpu_millis": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "disk_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "output_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "peak_memory_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "prompt_tokens": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "wall_time_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "wall_time_ms",
+        "cpu_millis",
+        "peak_memory_bytes",
+        "disk_bytes",
+        "output_bytes",
+        "prompt_tokens",
+        "completion_tokens"
+      ]
+    },
+    "SandboxRequest": {
+      "description": "A typed execution request. There is deliberately no command field: the\npreset decides what runs.",
+      "type": "object",
+      "properties": {
+        "limits": {
+          "$ref": "#/$defs/ExecutionLimits"
+        },
+        "preset_id": {
+          "$ref": "#/$defs/Ident"
+        },
+        "snapshot_id": {
+          "$ref": "#/$defs/SnapshotId"
+        },
+        "test_artifact": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ArtifactId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "variant": {
+          "$ref": "#/$defs/SnapshotVariant"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "preset_id",
+        "snapshot_id",
+        "variant",
+        "limits"
+      ]
+    },
+    "SnapshotId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "SnapshotVariant": {
+      "type": "string",
+      "enum": [
+        "base",
+        "reviewed",
+        "patched"
+      ]
+    }
+  }
+}

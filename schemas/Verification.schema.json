@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Verification",
+  "type": "object",
+  "properties": {
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 1024,
+        "minLength": 1,
+        "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+      },
+      "maxItems": 16
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/EvidenceId"
+      },
+      "maxItems": 16
+    },
+    "hypothesis_id": {
+      "$ref": "#/$defs/HypothesisId"
+    },
+    "id": {
+      "$ref": "#/$defs/VerificationId"
+    },
+    "outcome": {
+      "$ref": "#/$defs/EvidenceClass"
+    },
+    "verifier_id": {
+      "$ref": "#/$defs/AgentId"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "hypothesis_id",
+    "verifier_id",
+    "evidence_ids",
+    "outcome",
+    "assumptions"
+  ],
+  "$defs": {
+    "AgentId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "EvidenceClass": {
+      "description": "What the evidence establishes (design §11). Separate from [`Severity`].",
+      "oneOf": [
+        {
+          "description": "Supervisor-observed execution violates a sourced behavioural contract.",
+          "type": "string",
+          "const": "runtime_reproduced"
+        },
+        {
+          "description": "A pinned analyser/compiler independently reproduces a diagnostic.",
+          "type": "string",
+          "const": "deterministic_diagnostic"
+        },
+        {
+          "description": "A checkable argument under explicit assumptions and bounds.",
+          "type": "string",
+          "const": "bounded_static_proof"
+        },
+        {
+          "description": "Plausible but not established.",
+          "type": "string",
+          "const": "unverified"
+        },
+        {
+          "description": "Evidence contradicts the claim.",
+          "type": "string",
+          "const": "disproved"
+        },
+        {
+          "description": "Conflicting, flaky, budget-exhausted or oracle-inadequate.",
+          "type": "string",
+          "const": "inconclusive"
+        }
+      ]
+    },
+    "EvidenceId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "HypothesisId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "VerificationId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    }
+  }
+}

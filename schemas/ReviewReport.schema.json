@@ -1,0 +1,771 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ReviewReport",
+  "description": "The terminal report. Sections are disjoint by evidence class:\n`findings` holds only runtime-reproduced bugs, `diagnostics` holds\ndeterministic diagnostics and bounded static proofs, `open_questions`\nholds unverified and inconclusive concerns. Disproved hypotheses stay in\nthe audit log.",
+  "type": "object",
+  "properties": {
+    "coverage": {
+      "$ref": "#/$defs/Coverage"
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "maxItems": 2000
+    },
+    "evidence_manifest": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/EvidenceRef"
+      },
+      "maxItems": 10000
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "maxItems": 500
+    },
+    "job_id": {
+      "$ref": "#/$defs/JobId"
+    },
+    "manifest_digest": {
+      "description": "Digest of the snapshot manifest the report was produced from.",
+      "$ref": "#/$defs/Digest"
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "maxItems": 500
+    },
+    "resource_usage": {
+      "$ref": "#/$defs/ResourceUsage"
+    },
+    "schema_version": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
+    },
+    "scope": {
+      "$ref": "#/$defs/ResolvedScope"
+    },
+    "snapshot_id": {
+      "$ref": "#/$defs/SnapshotId"
+    },
+    "sources": {
+      "description": "Reviewed files cited by any finding, with the digests of their bytes.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ManifestEntry"
+      },
+      "maxItems": 20000
+    },
+    "status": {
+      "$ref": "#/$defs/JobState"
+    },
+    "verifications": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Verification"
+      },
+      "maxItems": 3000
+    },
+    "versions": {
+      "$ref": "#/$defs/VersionInfo"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "job_id",
+    "snapshot_id",
+    "status",
+    "scope",
+    "findings",
+    "diagnostics",
+    "open_questions",
+    "verifications",
+    "evidence_manifest",
+    "manifest_digest",
+    "sources",
+    "coverage",
+    "versions",
+    "resource_usage"
+  ],
+  "$defs": {
+    "AgentId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "ChangeAttribution": {
+      "description": "Whether the reviewed change introduced the problem.",
+      "type": "string",
+      "enum": [
+        "introduced_by_change",
+        "pre_existing",
+        "unknown"
+      ]
+    },
+    "ChangeKind": {
+      "type": "string",
+      "enum": [
+        "added",
+        "modified",
+        "deleted",
+        "renamed",
+        "unchanged"
+      ]
+    },
+    "Coverage": {
+      "type": "object",
+      "properties": {
+        "files_in_scope": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "files_reviewed": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "gaps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CoverageGap"
+          },
+          "maxItems": 1000
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "files_in_scope",
+        "files_reviewed",
+        "gaps"
+      ]
+    },
+    "CoverageGap": {
+      "description": "A visible statement of what was not reviewed or not verified (R09).",
+      "type": "object",
+      "properties": {
+        "code": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ErrorCode"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "detail": {
+          "type": "string",
+          "maxLength": 1024,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        },
+        "kind": {
+          "$ref": "#/$defs/GapKind"
+        },
+        "subject": {
+          "type": "string",
+          "maxLength": 512,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "subject",
+        "detail"
+      ]
+    },
+    "Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "ErrorCode": {
+      "description": "Stable error codes. Every code declares whether a retry may succeed and\nwhat it does to review coverage, so a failure is never reported as a pass.",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "BASE_UNAVAILABLE",
+            "SNAPSHOT_UNSTABLE",
+            "POLICY_DENIED",
+            "SANDBOX_UNAVAILABLE",
+            "EGRESS_POLICY_UNVERIFIED",
+            "DEPENDENCY_UNAVAILABLE",
+            "LANGUAGE_UNSUPPORTED",
+            "MODEL_NOT_INSTALLED",
+            "MODEL_OUTPUT_INVALID",
+            "OUT_OF_MEMORY",
+            "BUDGET_EXHAUSTED",
+            "WORKER_TIMEOUT",
+            "EVIDENCE_INVALID",
+            "STALE_PATCH",
+            "STORE_UNAVAILABLE"
+          ]
+        },
+        {
+          "description": "Input failed contract validation (bounds, enums, unknown fields, config).",
+          "type": "string",
+          "const": "INVALID_INPUT"
+        }
+      ]
+    },
+    "EvidenceClass": {
+      "description": "What the evidence establishes (design §11). Separate from [`Severity`].",
+      "oneOf": [
+        {
+          "description": "Supervisor-observed execution violates a sourced behavioural contract.",
+          "type": "string",
+          "const": "runtime_reproduced"
+        },
+        {
+          "description": "A pinned analyser/compiler independently reproduces a diagnostic.",
+          "type": "string",
+          "const": "deterministic_diagnostic"
+        },
+        {
+          "description": "A checkable argument under explicit assumptions and bounds.",
+          "type": "string",
+          "const": "bounded_static_proof"
+        },
+        {
+          "description": "Plausible but not established.",
+          "type": "string",
+          "const": "unverified"
+        },
+        {
+          "description": "Evidence contradicts the claim.",
+          "type": "string",
+          "const": "disproved"
+        },
+        {
+          "description": "Conflicting, flaky, budget-exhausted or oracle-inadequate.",
+          "type": "string",
+          "const": "inconclusive"
+        }
+      ]
+    },
+    "EvidenceId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "EvidenceKind": {
+      "type": "string",
+      "enum": [
+        "execution",
+        "diagnostic",
+        "static_argument"
+      ]
+    },
+    "EvidenceRef": {
+      "type": "object",
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "evidence_id": {
+          "$ref": "#/$defs/EvidenceId"
+        },
+        "kind": {
+          "$ref": "#/$defs/EvidenceKind"
+        },
+        "producer": {
+          "description": "The agent or supervisor that produced the evidence.",
+          "$ref": "#/$defs/AgentId"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "kind",
+        "producer",
+        "digest"
+      ]
+    },
+    "FileMode": {
+      "type": "string",
+      "enum": [
+        "regular",
+        "executable",
+        "symlink"
+      ]
+    },
+    "Finding": {
+      "type": "object",
+      "properties": {
+        "claim": {
+          "type": "string",
+          "maxLength": 1024,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        },
+        "discovered_by": {
+          "$ref": "#/$defs/AgentId"
+        },
+        "evidence_class": {
+          "$ref": "#/$defs/EvidenceClass"
+        },
+        "hypothesis_id": {
+          "description": "The hypothesis this finding publishes. Every cited verification must be of it.",
+          "$ref": "#/$defs/HypothesisId"
+        },
+        "id": {
+          "$ref": "#/$defs/FindingId"
+        },
+        "impact": {
+          "type": "string",
+          "maxLength": 1024,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        },
+        "introduced_by_change": {
+          "$ref": "#/$defs/ChangeAttribution"
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 1024,
+            "minLength": 1,
+            "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+          },
+          "maxItems": 16
+        },
+        "locations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceSpan"
+          },
+          "maxItems": 16
+        },
+        "reproduction_summary": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 1024,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        },
+        "verification_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/VerificationId"
+          },
+          "maxItems": 8
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "hypothesis_id",
+        "claim",
+        "severity",
+        "evidence_class",
+        "introduced_by_change",
+        "discovered_by",
+        "locations",
+        "verification_ids",
+        "impact",
+        "limitations"
+      ]
+    },
+    "FindingId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "GapKind": {
+      "type": "string",
+      "enum": [
+        "language_unsupported",
+        "dependency_unavailable",
+        "verification_unavailable",
+        "scanner_unavailable",
+        "input_skipped",
+        "context_truncated",
+        "candidate_cap_reached",
+        "budget_exhausted",
+        "stage_failed"
+      ]
+    },
+    "HypothesisId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "Ident": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+    },
+    "JobId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "JobState": {
+      "description": "Lifecycle state. `Completed`, `Partial`, `Failed` and `Cancelled` are terminal.",
+      "type": "string",
+      "enum": [
+        "queued",
+        "running",
+        "input_required",
+        "completed",
+        "partial",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "ManifestEntry": {
+      "description": "One included file, identified by its reviewed bytes.",
+      "type": "object",
+      "properties": {
+        "change": {
+          "$ref": "#/$defs/ChangeKind"
+        },
+        "digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "line_count": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "mode": {
+          "$ref": "#/$defs/FileMode"
+        },
+        "path": {
+          "$ref": "#/$defs/RepoPath"
+        },
+        "renamed_from": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RepoPath"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "size_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "digest",
+        "mode",
+        "size_bytes",
+        "line_count",
+        "change"
+      ]
+    },
+    "ModelIdentity": {
+      "description": "Exact identity of the model that produced an output (design §14).",
+      "type": "object",
+      "properties": {
+        "context_limit": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "name": {
+          "$ref": "#/$defs/Ident"
+        },
+        "quantisation": {
+          "$ref": "#/$defs/Ident"
+        },
+        "runtime_build": {
+          "type": "string",
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        },
+        "tokenizer_digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "weights_digest": {
+          "$ref": "#/$defs/Digest"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "weights_digest",
+        "tokenizer_digest",
+        "quantisation",
+        "runtime_build",
+        "context_limit"
+      ]
+    },
+    "ObjectId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$"
+    },
+    "RepoPath": {
+      "description": "Repository-relative path; '%', control characters and invalid UTF-8 bytes are %XX-escaped. '.'/'..' components are rejected by the engine.",
+      "type": "string",
+      "maxLength": 12288,
+      "minLength": 1,
+      "pattern": "^[^/\\x00-\\x1F\\x7F-\\x9F][^\\x00-\\x1F\\x7F-\\x9F]*$"
+    },
+    "ResolvedScope": {
+      "description": "The exact comparison the engine used.",
+      "type": "object",
+      "properties": {
+        "base_commit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ObjectId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "head_commit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ObjectId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "include_untracked": {
+          "type": "boolean"
+        },
+        "merge_parent": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "mode": {
+          "$ref": "#/$defs/ScopeMode"
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RepoPath"
+          },
+          "maxItems": 1000
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "paths",
+        "include_untracked"
+      ]
+    },
+    "ResourceUsage": {
+      "type": "object",
+      "properties": {
+        "completion_tokens": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "cpu_millis": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "disk_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "output_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "peak_memory_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "prompt_tokens": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "wall_time_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "wall_time_ms",
+        "cpu_millis",
+        "peak_memory_bytes",
+        "disk_bytes",
+        "output_bytes",
+        "prompt_tokens",
+        "completion_tokens"
+      ]
+    },
+    "ScopeMode": {
+      "type": "string",
+      "enum": [
+        "branch",
+        "range",
+        "commit",
+        "staged",
+        "worktree",
+        "paths",
+        "imported_pr"
+      ]
+    },
+    "Severity": {
+      "description": "Impact if the claim holds. Independent of how certain the claim is.",
+      "type": "string",
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ]
+    },
+    "SnapshotId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "SourceSpan": {
+      "description": "A cited range of reviewed bytes. Lines are 1-based and inclusive.",
+      "type": "object",
+      "properties": {
+        "end_line": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "file_digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "path": {
+          "$ref": "#/$defs/RepoPath"
+        },
+        "start_line": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "file_digest",
+        "start_line",
+        "end_line"
+      ]
+    },
+    "Verification": {
+      "type": "object",
+      "properties": {
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 1024,
+            "minLength": 1,
+            "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+          },
+          "maxItems": 16
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceId"
+          },
+          "maxItems": 16
+        },
+        "hypothesis_id": {
+          "$ref": "#/$defs/HypothesisId"
+        },
+        "id": {
+          "$ref": "#/$defs/VerificationId"
+        },
+        "outcome": {
+          "$ref": "#/$defs/EvidenceClass"
+        },
+        "verifier_id": {
+          "$ref": "#/$defs/AgentId"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "hypothesis_id",
+        "verifier_id",
+        "evidence_ids",
+        "outcome",
+        "assumptions"
+      ]
+    },
+    "VerificationId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "VersionInfo": {
+      "type": "object",
+      "properties": {
+        "engine": {
+          "type": "string",
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ModelIdentity"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "policy_digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "prompt_version": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Ident"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "engine",
+        "policy_digest"
+      ]
+    }
+  }
+}

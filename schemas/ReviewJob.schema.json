@@ -1,0 +1,286 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ReviewJob",
+  "type": "object",
+  "properties": {
+    "budget": {
+      "$ref": "#/$defs/ResourceBudget"
+    },
+    "created_at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/CoverageGap"
+      },
+      "maxItems": 1000
+    },
+    "job_id": {
+      "$ref": "#/$defs/JobId"
+    },
+    "request": {
+      "$ref": "#/$defs/ReviewRequest"
+    },
+    "stage": {
+      "$ref": "#/$defs/JobStage"
+    },
+    "status": {
+      "$ref": "#/$defs/JobState"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "job_id",
+    "request",
+    "stage",
+    "status",
+    "budget",
+    "gaps",
+    "created_at"
+  ],
+  "$defs": {
+    "CallerId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "CoverageGap": {
+      "description": "A visible statement of what was not reviewed or not verified (R09).",
+      "type": "object",
+      "properties": {
+        "code": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ErrorCode"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "detail": {
+          "type": "string",
+          "maxLength": 1024,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        },
+        "kind": {
+          "$ref": "#/$defs/GapKind"
+        },
+        "subject": {
+          "type": "string",
+          "maxLength": 512,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "subject",
+        "detail"
+      ]
+    },
+    "ErrorCode": {
+      "description": "Stable error codes. Every code declares whether a retry may succeed and\nwhat it does to review coverage, so a failure is never reported as a pass.",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "BASE_UNAVAILABLE",
+            "SNAPSHOT_UNSTABLE",
+            "POLICY_DENIED",
+            "SANDBOX_UNAVAILABLE",
+            "EGRESS_POLICY_UNVERIFIED",
+            "DEPENDENCY_UNAVAILABLE",
+            "LANGUAGE_UNSUPPORTED",
+            "MODEL_NOT_INSTALLED",
+            "MODEL_OUTPUT_INVALID",
+            "OUT_OF_MEMORY",
+            "BUDGET_EXHAUSTED",
+            "WORKER_TIMEOUT",
+            "EVIDENCE_INVALID",
+            "STALE_PATCH",
+            "STORE_UNAVAILABLE"
+          ]
+        },
+        {
+          "description": "Input failed contract validation (bounds, enums, unknown fields, config).",
+          "type": "string",
+          "const": "INVALID_INPUT"
+        }
+      ]
+    },
+    "GapKind": {
+      "type": "string",
+      "enum": [
+        "language_unsupported",
+        "dependency_unavailable",
+        "verification_unavailable",
+        "scanner_unavailable",
+        "input_skipped",
+        "context_truncated",
+        "candidate_cap_reached",
+        "budget_exhausted",
+        "stage_failed"
+      ]
+    },
+    "IdempotencyKey": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{8,128}$"
+    },
+    "JobId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "JobStage": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "preflight",
+        "snapshot",
+        "indexing",
+        "scanning",
+        "discovering",
+        "verifying",
+        "adjudicating",
+        "reporting"
+      ]
+    },
+    "JobState": {
+      "description": "Lifecycle state. `Completed`, `Partial`, `Failed` and `Cancelled` are terminal.",
+      "type": "string",
+      "enum": [
+        "queued",
+        "running",
+        "input_required",
+        "completed",
+        "partial",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "PreparationId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "ResourceBudget": {
+      "description": "Hard resource limits for a job (R10). Defaults are the design's initial\nscheduling defaults, not measured optima.",
+      "type": "object",
+      "properties": {
+        "cpu_millis": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "disk_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "max_discovery_roles": {
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "max_inference_concurrency": {
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "max_packet_tokens": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "max_repair_attempts": {
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "max_verification_candidates": {
+          "type": "integer",
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0
+        },
+        "max_verification_workers": {
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "memory_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "output_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "processes": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "tokens": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "wall_time_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "wall_time_ms",
+        "cpu_millis",
+        "memory_bytes",
+        "disk_bytes",
+        "output_bytes",
+        "processes",
+        "tokens",
+        "max_inference_concurrency",
+        "max_verification_workers",
+        "max_discovery_roles",
+        "max_repair_attempts",
+        "max_verification_candidates",
+        "max_packet_tokens"
+      ]
+    },
+    "ReviewRequest": {
+      "type": "object",
+      "properties": {
+        "caller": {
+          "$ref": "#/$defs/CallerId"
+        },
+        "idempotency_key": {
+          "$ref": "#/$defs/IdempotencyKey"
+        },
+        "preparation_id": {
+          "$ref": "#/$defs/PreparationId"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "preparation_id",
+        "idempotency_key",
+        "caller"
+      ]
+    },
+    "Timestamp": {
+      "description": "Milliseconds since the Unix epoch (UTC).",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0
+    }
+  }
+}

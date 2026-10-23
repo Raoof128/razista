@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ActionGrant",
+  "description": "A capability bound to one caller, repository, optional job/snapshot/scope,\na set of actions, the policy it was issued under, and an expiry.",
+  "type": "object",
+  "properties": {
+    "actions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ActionKind"
+      },
+      "maxItems": 6
+    },
+    "caller": {
+      "$ref": "#/$defs/CallerId"
+    },
+    "expires_at": {
+      "description": "Exclusive: the grant is invalid at and after this instant.",
+      "$ref": "#/$defs/Timestamp"
+    },
+    "grant_id": {
+      "$ref": "#/$defs/GrantId"
+    },
+    "issued_by": {
+      "$ref": "#/$defs/CallerId"
+    },
+    "job_id": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JobId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/Digest"
+    },
+    "repo_id": {
+      "$ref": "#/$defs/RepoId"
+    },
+    "scope_digest": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "snapshot_id": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SnapshotId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "grant_id",
+    "caller",
+    "repo_id",
+    "actions",
+    "policy_digest",
+    "issued_by",
+    "expires_at"
+  ],
+  "$defs": {
+    "ActionKind": {
+      "description": "The closed set of review actions. Network access and installation are not\nreview actions and cannot be granted.",
+      "type": "string",
+      "enum": [
+        "read_snapshot",
+        "read_context",
+        "run_preset",
+        "generate_report",
+        "propose_patch",
+        "apply_patch"
+      ]
+    },
+    "CallerId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "GrantId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "JobId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "RepoId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "SnapshotId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "Timestamp": {
+      "description": "Milliseconds since the Unix epoch (UTC).",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0
+    }
+  }
+}

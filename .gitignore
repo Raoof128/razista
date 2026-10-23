@@ -1,0 +1,7 @@
+/target/
+/.superpowers/
+/.remember/
+# Model weights and prepared offline bundles never enter Git (models/ holds manifests only).
+/models/**/*.gguf
+/models/**/*.safetensors
+/vendor/bundles/

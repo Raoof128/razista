@@ -1,0 +1,12 @@
+# Every `run:` step must be a Cargo command (R26; enforced by xtask audit-sources).
+name: ci
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo run --locked -p xtask -- audit-sources
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - run: cargo test --workspace --locked

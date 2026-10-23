@@ -1,0 +1,22 @@
+# Trusted operator profile. Loaded only from the engine's profiles directory,
+# never from a reviewed repository. Unknown keys are refused.
+profile_id = "offline-strict"
+description = "Strict local review: no network egress, no cloud inference, design default limits."
+offline_strict = true
+network_egress = "denied"
+
+# Initial scheduling defaults from the design (§9, §10). Not measured optima.
+[budget]
+wall_time_ms = 3600000
+cpu_millis = 14400000
+memory_bytes = 4294967296
+disk_bytes = 8589934592
+output_bytes = 67108864
+processes = 256
+tokens = 2000000
+max_inference_concurrency = 1
+max_verification_workers = 2
+max_discovery_roles = 6
+max_repair_attempts = 2
+max_verification_candidates = 24
+max_packet_tokens = 12000

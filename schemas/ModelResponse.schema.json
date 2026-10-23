@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ModelResponse",
+  "type": "object",
+  "properties": {
+    "completion_tokens": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0
+    },
+    "model": {
+      "$ref": "#/$defs/ModelIdentity"
+    },
+    "output_artifact": {
+      "description": "The raw structured output, stored as an untrusted artefact.",
+      "$ref": "#/$defs/ArtifactId"
+    },
+    "prompt_tokens": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0
+    },
+    "repair_attempts": {
+      "type": "integer",
+      "format": "uint8",
+      "maximum": 255,
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "model",
+    "output_artifact",
+    "prompt_tokens",
+    "completion_tokens",
+    "repair_attempts"
+  ],
+  "$defs": {
+    "ArtifactId": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "Ident": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+    },
+    "ModelIdentity": {
+      "description": "Exact identity of the model that produced an output (design §14).",
+      "type": "object",
+      "properties": {
+        "context_limit": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "name": {
+          "$ref": "#/$defs/Ident"
+        },
+        "quantisation": {
+          "$ref": "#/$defs/Ident"
+        },
+        "runtime_build": {
+          "type": "string",
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        },
+        "tokenizer_digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "weights_digest": {
+          "$ref": "#/$defs/Digest"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "weights_digest",
+        "tokenizer_digest",
+        "quantisation",
+        "runtime_build",
+        "context_limit"
+      ]
+    }
+  }
+}

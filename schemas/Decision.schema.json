@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Decision",
+  "description": "One audited authorisation decision.\n\nA denial is a value, not an error: callers must act on it, usually with\n[`Decision::require`]. Dropping it unread is a bug.",
+  "type": "object",
+  "properties": {
+    "action": {
+      "$ref": "#/$defs/ActionKind"
+    },
+    "at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "caller": {
+      "$ref": "#/$defs/CallerId"
+    },
+    "grant_id": {
+      "$ref": "#/$defs/GrantId"
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/Digest"
+    },
+    "verdict": {
+      "$ref": "#/$defs/Verdict"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "verdict",
+    "caller",
+    "action",
+    "grant_id",
+    "policy_digest",
+    "at"
+  ],
+  "$defs": {
+    "ActionKind": {
+      "description": "The closed set of review actions. Network access and installation are not\nreview actions and cannot be granted.",
+      "type": "string",
+      "enum": [
+        "read_snapshot",
+        "read_context",
+        "run_preset",
+        "generate_report",
+        "propose_patch",
+        "apply_patch"
+      ]
+    },
+    "CallerId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "DenyReason": {
+      "type": "string",
+      "enum": [
+        "unknown_caller",
+        "grant_caller_mismatch",
+        "issuer_not_local_human",
+        "policy_changed",
+        "grant_expired",
+        "principal_kind_forbidden",
+        "action_not_granted",
+        "repository_mismatch",
+        "job_mismatch",
+        "snapshot_mismatch",
+        "scope_changed",
+        "grant_not_bound"
+      ]
+    },
+    "Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "GrantId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "Timestamp": {
+      "description": "Milliseconds since the Unix epoch (UTC).",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0
+    },
+    "Verdict": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "outcome": {
+              "type": "string",
+              "const": "allow"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "outcome"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "outcome": {
+              "type": "string",
+              "const": "deny"
+            },
+            "reason": {
+              "$ref": "#/$defs/DenyReason"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "outcome",
+            "reason"
+          ]
+        }
+      ]
+    }
+  }
+}

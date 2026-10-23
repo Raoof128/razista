@@ -1,0 +1,214 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VerificationRequest",
+  "type": "object",
+  "properties": {
+    "attempt_budget": {
+      "type": "integer",
+      "format": "uint8",
+      "maximum": 255,
+      "minimum": 0
+    },
+    "contract": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ContractSource"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "hypothesis": {
+      "$ref": "#/$defs/Hypothesis"
+    },
+    "snapshot_id": {
+      "$ref": "#/$defs/SnapshotId"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "snapshot_id",
+    "hypothesis",
+    "attempt_budget"
+  ],
+  "$defs": {
+    "AgentId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "ContractKind": {
+      "type": "string",
+      "enum": [
+        "approved_requirement",
+        "api_semantics",
+        "existing_test",
+        "checked_invariant",
+        "reference_implementation"
+      ]
+    },
+    "ContractSource": {
+      "description": "Where the expected behaviour comes from. Generated tests never define it.",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/ContractKind"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SourceSpan"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "statement": {
+          "type": "string",
+          "maxLength": 1024,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "statement"
+      ]
+    },
+    "Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "Hypothesis": {
+      "description": "A falsifiable claim from a discovery role (design §8 stage C).",
+      "type": "object",
+      "properties": {
+        "claim": {
+          "type": "string",
+          "maxLength": 1024,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        },
+        "context_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceSpan"
+          },
+          "maxItems": 64
+        },
+        "discovered_by": {
+          "$ref": "#/$defs/AgentId"
+        },
+        "falsification": {
+          "type": "string",
+          "maxLength": 1024,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        },
+        "id": {
+          "$ref": "#/$defs/HypothesisId"
+        },
+        "impact": {
+          "type": "string",
+          "maxLength": 1024,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        },
+        "invariant": {
+          "type": "string",
+          "maxLength": 1024,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        },
+        "locations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceSpan"
+          },
+          "maxItems": 16
+        },
+        "role": {
+          "$ref": "#/$defs/RoleKind"
+        },
+        "trigger": {
+          "type": "string",
+          "maxLength": 1024,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "role",
+        "discovered_by",
+        "claim",
+        "invariant",
+        "trigger",
+        "impact",
+        "falsification",
+        "locations",
+        "context_refs"
+      ]
+    },
+    "HypothesisId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "RepoPath": {
+      "description": "Repository-relative path; '%', control characters and invalid UTF-8 bytes are %XX-escaped. '.'/'..' components are rejected by the engine.",
+      "type": "string",
+      "maxLength": 12288,
+      "minLength": 1,
+      "pattern": "^[^/\\x00-\\x1F\\x7F-\\x9F][^\\x00-\\x1F\\x7F-\\x9F]*$"
+    },
+    "RoleKind": {
+      "type": "string",
+      "enum": [
+        "correctness",
+        "security",
+        "contracts",
+        "state_concurrency",
+        "performance_resources",
+        "tests_regressions",
+        "verifier",
+        "challenger"
+      ]
+    },
+    "SnapshotId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "SourceSpan": {
+      "description": "A cited range of reviewed bytes. Lines are 1-based and inclusive.",
+      "type": "object",
+      "properties": {
+        "end_line": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "file_digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "path": {
+          "$ref": "#/$defs/RepoPath"
+        },
+        "start_line": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "file_digest",
+        "start_line",
+        "end_line"
+      ]
+    }
+  }
+}

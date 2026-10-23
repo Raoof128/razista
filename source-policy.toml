@@ -1,0 +1,36 @@
+# R26 first-party source-language policy, enforced by
+#   cargo run --locked -p xtask -- audit-sources
+# Anything not Rust, not declared data, and not under a declared exception is a
+# violation. Adding an exception requires a reason; vendor code also requires
+# an inventory manifest. Do not broaden these to hide first-party helpers.
+version = 1
+
+rust_extensions = ["rs"]
+
+# Non-executable data: docs, config, schemas, prompts, datasets, reports.
+data_extensions = [
+  "md", "txt", "json", "jsonl", "toml", "yaml", "yml", "lock", "csv", "sarif",
+]
+
+# Extensionless or dot-files that are data.
+data_filenames = ["LICENSE", "NOTICE", ".gitignore", ".gitattributes"]
+
+# Build output, VCS metadata and local tool state (not owned product code).
+ignored_dirs = ["target", ".git", ".remember", ".superpowers"]
+
+# Workflow files whose `run:` steps must be Cargo commands only.
+ci_workflow_dirs = [".github/workflows", ".github/actions"]
+
+# Third-party actions a workflow may use. Script, container and local actions
+# are never allowed; anything not listed here is rejected.
+ci_allowed_actions = ["actions/checkout"]
+
+[[exceptions]]
+path = "fixtures"
+kind = "fixture"
+reason = "Synthetic reviewed-language repositories (Python, TypeScript, ...). Untrusted data, executed only inside the sandbox."
+
+[[exceptions]]
+path = "security/attacks"
+kind = "fixture"
+reason = "Adversarial payloads for T22. Untrusted data, never first-party harness code."

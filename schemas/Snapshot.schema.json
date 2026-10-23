@@ -1,0 +1,260 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Snapshot",
+  "type": "object",
+  "properties": {
+    "consistency_evidence": {
+      "$ref": "#/$defs/ConsistencyEvidence"
+    },
+    "manifest": {
+      "$ref": "#/$defs/SnapshotManifest"
+    },
+    "repo_id": {
+      "$ref": "#/$defs/RepoId"
+    },
+    "resolved_scope": {
+      "$ref": "#/$defs/ResolvedScope"
+    },
+    "snapshot_id": {
+      "$ref": "#/$defs/SnapshotId"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "snapshot_id",
+    "repo_id",
+    "resolved_scope",
+    "manifest",
+    "consistency_evidence"
+  ],
+  "$defs": {
+    "ChangeKind": {
+      "type": "string",
+      "enum": [
+        "added",
+        "modified",
+        "deleted",
+        "renamed",
+        "unchanged"
+      ]
+    },
+    "ConsistencyEvidence": {
+      "description": "How the capture proved it did not mix concurrent edits.",
+      "type": "object",
+      "properties": {
+        "capture_passes": {
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "manifest_digest": {
+          "$ref": "#/$defs/Digest"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "capture_passes",
+        "manifest_digest"
+      ]
+    },
+    "Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "FileMode": {
+      "type": "string",
+      "enum": [
+        "regular",
+        "executable",
+        "symlink"
+      ]
+    },
+    "ManifestEntry": {
+      "description": "One included file, identified by its reviewed bytes.",
+      "type": "object",
+      "properties": {
+        "change": {
+          "$ref": "#/$defs/ChangeKind"
+        },
+        "digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "line_count": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "mode": {
+          "$ref": "#/$defs/FileMode"
+        },
+        "path": {
+          "$ref": "#/$defs/RepoPath"
+        },
+        "renamed_from": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RepoPath"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "size_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "digest",
+        "mode",
+        "size_bytes",
+        "line_count",
+        "change"
+      ]
+    },
+    "ObjectId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$"
+    },
+    "RepoId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "RepoPath": {
+      "description": "Repository-relative path; '%', control characters and invalid UTF-8 bytes are %XX-escaped. '.'/'..' components are rejected by the engine.",
+      "type": "string",
+      "maxLength": 12288,
+      "minLength": 1,
+      "pattern": "^[^/\\x00-\\x1F\\x7F-\\x9F][^\\x00-\\x1F\\x7F-\\x9F]*$"
+    },
+    "ResolvedScope": {
+      "description": "The exact comparison the engine used.",
+      "type": "object",
+      "properties": {
+        "base_commit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ObjectId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "head_commit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ObjectId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "include_untracked": {
+          "type": "boolean"
+        },
+        "merge_parent": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "mode": {
+          "$ref": "#/$defs/ScopeMode"
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RepoPath"
+          },
+          "maxItems": 1000
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "paths",
+        "include_untracked"
+      ]
+    },
+    "ScopeMode": {
+      "type": "string",
+      "enum": [
+        "branch",
+        "range",
+        "commit",
+        "staged",
+        "worktree",
+        "paths",
+        "imported_pr"
+      ]
+    },
+    "SkipReason": {
+      "type": "string",
+      "enum": [
+        "binary",
+        "too_large",
+        "lfs_pointer",
+        "submodule",
+        "generated",
+        "vendored",
+        "unsafe_path",
+        "untracked_not_approved",
+        "file_limit"
+      ]
+    },
+    "SkippedInput": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/RepoPath"
+        },
+        "reason": {
+          "$ref": "#/$defs/SkipReason"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "reason"
+      ]
+    },
+    "SnapshotId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "SnapshotManifest": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ManifestEntry"
+          },
+          "maxItems": 20000
+        },
+        "skipped": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SkippedInput"
+          },
+          "maxItems": 20000
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "entries",
+        "skipped"
+      ]
+    }
+  }
+}

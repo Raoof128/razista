@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BundleManifest",
+  "description": "The offline bundle produced by `prepare` (R21). Review uses nothing else.",
+  "type": "object",
+  "properties": {
+    "created_at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/BundleEntry"
+      },
+      "maxItems": 1024
+    },
+    "schema_version": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "created_at",
+    "entries"
+  ],
+  "$defs": {
+    "BundleEntry": {
+      "type": "object",
+      "properties": {
+        "created_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "kind": {
+          "$ref": "#/$defs/BundleKind"
+        },
+        "licence": {
+          "type": "string",
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        },
+        "name": {
+          "$ref": "#/$defs/Ident"
+        },
+        "origin": {
+          "type": "string",
+          "maxLength": 2048,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "kind",
+        "version",
+        "digest",
+        "licence",
+        "origin",
+        "created_at"
+      ]
+    },
+    "BundleKind": {
+      "type": "string",
+      "enum": [
+        "model_weights",
+        "inference_runtime",
+        "rule_pack",
+        "advisory_database",
+        "language_dependencies",
+        "execution_image",
+        "scanner"
+      ]
+    },
+    "Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "Ident": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+    },
+    "Timestamp": {
+      "description": "Milliseconds since the Unix epoch (UTC).",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0
+    }
+  }
+}

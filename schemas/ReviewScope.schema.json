@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ReviewScope",
+  "description": "The scope a caller asks for. Resolved into a [`ResolvedScope`] before any\nagent is scheduled.",
+  "type": "object",
+  "properties": {
+    "base": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 256,
+      "minLength": 1,
+      "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+    },
+    "head": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 256,
+      "minLength": 1,
+      "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+    },
+    "include_untracked": {
+      "type": "boolean"
+    },
+    "merge_parent": {
+      "description": "1-based parent for `commit` mode on a merge commit.",
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint8",
+      "maximum": 255,
+      "minimum": 0
+    },
+    "mode": {
+      "$ref": "#/$defs/ScopeMode"
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/RepoPath"
+      },
+      "maxItems": 1000
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "mode",
+    "paths",
+    "include_untracked"
+  ],
+  "$defs": {
+    "RepoPath": {
+      "description": "Repository-relative path; '%', control characters and invalid UTF-8 bytes are %XX-escaped. '.'/'..' components are rejected by the engine.",
+      "type": "string",
+      "maxLength": 12288,
+      "minLength": 1,
+      "pattern": "^[^/\\x00-\\x1F\\x7F-\\x9F][^\\x00-\\x1F\\x7F-\\x9F]*$"
+    },
+    "ScopeMode": {
+      "type": "string",
+      "enum": [
+        "branch",
+        "range",
+        "commit",
+        "staged",
+        "worktree",
+        "paths",
+        "imported_pr"
+      ]
+    }
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PatchProposal",
+  "type": "object",
+  "properties": {
+    "diff_artifact": {
+      "$ref": "#/$defs/ArtifactId"
+    },
+    "file_preconditions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/FilePrecondition"
+      },
+      "maxItems": 256
+    },
+    "id": {
+      "$ref": "#/$defs/ProposalId"
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 1024,
+        "minLength": 1,
+        "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+      },
+      "maxItems": 32
+    },
+    "target_snapshot": {
+      "$ref": "#/$defs/SnapshotId"
+    },
+    "verification_job_ids": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/JobId"
+      },
+      "maxItems": 32
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "target_snapshot",
+    "file_preconditions",
+    "diff_artifact",
+    "verification_job_ids",
+    "risks"
+  ],
+  "$defs": {
+    "ArtifactId": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "FilePrecondition": {
+      "description": "A file must hold exactly `digest` (or be absent when `None`) for a patch to apply.",
+      "type": "object",
+      "properties": {
+        "digest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "path": {
+          "$ref": "#/$defs/RepoPath"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "path"
+      ]
+    },
+    "JobId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "ProposalId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "RepoPath": {
+      "description": "Repository-relative path; '%', control characters and invalid UTF-8 bytes are %XX-escaped. '.'/'..' components are rejected by the engine.",
+      "type": "string",
+      "maxLength": 12288,
+      "minLength": 1,
+      "pattern": "^[^/\\x00-\\x1F\\x7F-\\x9F][^\\x00-\\x1F\\x7F-\\x9F]*$"
+    },
+    "SnapshotId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    }
+  }
+}

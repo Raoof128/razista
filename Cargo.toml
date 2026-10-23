@@ -1,0 +1,37 @@
+[workspace]
+resolver = "3"
+members = ["crates/ultra-core", "crates/ultra-mcp", "crates/xtask"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license = "UNLICENSED"
+publish = false
+
+[workspace.dependencies]
+# Pinned with `=` so a lockfile refresh cannot silently move the protocol or schema stack.
+# Rationale and dates: docs/adr/001-stack.md, vendor/manifests/toolchain.json.
+rmcp = { version = "=3.7.0", default-features = false }
+schemars = { version = "1.0", features = ["uuid1"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.10"
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "io-util"] }
+toml = "0.9"
+yaml-rust2 = { version = "0.13", default-features = false }
+uuid = { version = "1", features = ["v7", "serde"] }
+hex = "0.4"
+
+# dev-only
+jsonschema = { version = "0.60", default-features = false }
+tempfile = "3"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+dbg_macro = "deny"
+todo = "deny"
+unwrap_used = "warn"

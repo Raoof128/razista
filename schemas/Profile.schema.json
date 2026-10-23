@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Profile",
+  "type": "object",
+  "properties": {
+    "budget": {
+      "$ref": "#/$defs/ResourceBudget"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1024,
+      "minLength": 1,
+      "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+    },
+    "network_egress": {
+      "$ref": "#/$defs/NetworkEgress"
+    },
+    "offline_strict": {
+      "type": "boolean"
+    },
+    "profile_id": {
+      "$ref": "#/$defs/Ident"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "profile_id",
+    "description",
+    "offline_strict",
+    "network_egress",
+    "budget"
+  ],
+  "$defs": {
+    "Ident": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+    },
+    "NetworkEgress": {
+      "description": "Network egress for review work. The strict release has exactly one\nsetting, so \"allowed\" cannot even be written in a profile.",
+      "type": "string",
+      "enum": [
+        "denied"
+      ]
+    },
+    "ResourceBudget": {
+      "description": "Hard resource limits for a job (R10). Defaults are the design's initial\nscheduling defaults, not measured optima.",
+      "type": "object",
+      "properties": {
+        "cpu_millis": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "disk_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "max_discovery_roles": {
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "max_inference_concurrency": {
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "max_packet_tokens": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "max_repair_attempts": {
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "max_verification_candidates": {
+          "type": "integer",
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0
+        },
+        "max_verification_workers": {
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "memory_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "output_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "processes": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "tokens": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "wall_time_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "wall_time_ms",
+        "cpu_millis",
+        "memory_bytes",
+        "disk_bytes",
+        "output_bytes",
+        "processes",
+        "tokens",
+        "max_inference_concurrency",
+        "max_verification_workers",
+        "max_discovery_roles",
+        "max_repair_attempts",
+        "max_verification_candidates",
+        "max_packet_tokens"
+      ]
+    }
+  }
+}

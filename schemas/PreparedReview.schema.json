@@ -1,0 +1,273 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PreparedReview",
+  "description": "A frozen preparation. Starting it binds exactly this snapshot and policy.",
+  "type": "object",
+  "properties": {
+    "expires_at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "plan": {
+      "$ref": "#/$defs/ReviewPlan"
+    },
+    "policy_hash": {
+      "$ref": "#/$defs/Digest"
+    },
+    "preparation_id": {
+      "$ref": "#/$defs/PreparationId"
+    },
+    "snapshot_id": {
+      "$ref": "#/$defs/SnapshotId"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "preparation_id",
+    "snapshot_id",
+    "policy_hash",
+    "plan",
+    "expires_at"
+  ],
+  "$defs": {
+    "CoverageGap": {
+      "description": "A visible statement of what was not reviewed or not verified (R09).",
+      "type": "object",
+      "properties": {
+        "code": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ErrorCode"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "detail": {
+          "type": "string",
+          "maxLength": 1024,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        },
+        "kind": {
+          "$ref": "#/$defs/GapKind"
+        },
+        "subject": {
+          "type": "string",
+          "maxLength": 512,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0B-\\x1F\\x7F-\\x9F]*$"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "subject",
+        "detail"
+      ]
+    },
+    "Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "ErrorCode": {
+      "description": "Stable error codes. Every code declares whether a retry may succeed and\nwhat it does to review coverage, so a failure is never reported as a pass.",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "BASE_UNAVAILABLE",
+            "SNAPSHOT_UNSTABLE",
+            "POLICY_DENIED",
+            "SANDBOX_UNAVAILABLE",
+            "EGRESS_POLICY_UNVERIFIED",
+            "DEPENDENCY_UNAVAILABLE",
+            "LANGUAGE_UNSUPPORTED",
+            "MODEL_NOT_INSTALLED",
+            "MODEL_OUTPUT_INVALID",
+            "OUT_OF_MEMORY",
+            "BUDGET_EXHAUSTED",
+            "WORKER_TIMEOUT",
+            "EVIDENCE_INVALID",
+            "STALE_PATCH",
+            "STORE_UNAVAILABLE"
+          ]
+        },
+        {
+          "description": "Input failed contract validation (bounds, enums, unknown fields, config).",
+          "type": "string",
+          "const": "INVALID_INPUT"
+        }
+      ]
+    },
+    "GapKind": {
+      "type": "string",
+      "enum": [
+        "language_unsupported",
+        "dependency_unavailable",
+        "verification_unavailable",
+        "scanner_unavailable",
+        "input_skipped",
+        "context_truncated",
+        "candidate_cap_reached",
+        "budget_exhausted",
+        "stage_failed"
+      ]
+    },
+    "Ident": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+    },
+    "PreparationId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "ResourceBudget": {
+      "description": "Hard resource limits for a job (R10). Defaults are the design's initial\nscheduling defaults, not measured optima.",
+      "type": "object",
+      "properties": {
+        "cpu_millis": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "disk_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "max_discovery_roles": {
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "max_inference_concurrency": {
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "max_packet_tokens": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "max_repair_attempts": {
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "max_verification_candidates": {
+          "type": "integer",
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0
+        },
+        "max_verification_workers": {
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "memory_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "output_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "processes": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "tokens": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "wall_time_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "wall_time_ms",
+        "cpu_millis",
+        "memory_bytes",
+        "disk_bytes",
+        "output_bytes",
+        "processes",
+        "tokens",
+        "max_inference_concurrency",
+        "max_verification_workers",
+        "max_discovery_roles",
+        "max_repair_attempts",
+        "max_verification_candidates",
+        "max_packet_tokens"
+      ]
+    },
+    "ReviewPlan": {
+      "type": "object",
+      "properties": {
+        "budget": {
+          "$ref": "#/$defs/ResourceBudget"
+        },
+        "disabled_capabilities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CoverageGap"
+          },
+          "maxItems": 256
+        },
+        "profile_id": {
+          "$ref": "#/$defs/Ident"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RoleKind"
+          },
+          "maxItems": 8
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "profile_id",
+        "roles",
+        "disabled_capabilities",
+        "budget"
+      ]
+    },
+    "RoleKind": {
+      "type": "string",
+      "enum": [
+        "correctness",
+        "security",
+        "contracts",
+        "state_concurrency",
+        "performance_resources",
+        "tests_regressions",
+        "verifier",
+        "challenger"
+      ]
+    },
+    "SnapshotId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "Timestamp": {
+      "description": "Milliseconds since the Unix epoch (UTC).",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0
+    }
+  }
+}
