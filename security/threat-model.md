@@ -44,6 +44,8 @@ operator's encrypted volume and OS account protection (design §18).
 | Stale authority after a policy change | Grants carry the policy digest; any profile/principal change invalidates them. | `policy_change_invalidates_existing_grants` |
 | Expired authority | Expiry is exclusive and checked on every call. | `expired_grant_is_denied` |
 | Unbound grant used as a wildcard | `run_preset`, `propose_patch` and `apply_patch` require grants bound to job, snapshot and scope digest. | `consequential_actions_require_fully_bound_grants` |
+| Another caller reads a job, its events or evidence | Store reads take the caller and return one uniform "not found or not owned" denial; artefact bytes are read only through evidence the caller owns. | `crates/ultra-store/tests/ownership.rs` |
+| A crash publishes half-written evidence, or a late worker rewrites a finished job | Blobs are published tmp → fsync → rename → dir fsync → row; recovery removes orphans; reads re-hash bytes; terminal jobs refuse transitions and new evidence; one process owns a store (lock file); SQLite uses WAL with full fsync. | `crates/ultra-store/tests/{persistence,recovery}.rs` |
 | Silent denial | Every decision is a serialisable record naming caller, action, grant, policy digest, time and reason. | `every_denial_is_structured_and_auditable` |
 | Arbitrary commands via contracts | No contract has a command field; unknown fields are rejected by serde and by the generated JSON Schemas. | `unknown_command_field_is_rejected` (T02) |
 | Terminal escape injection via report text | `Text` refuses C0/C1 controls other than tab/newline at the boundary. | `bounded_strings_and_arrays` (T02) |
@@ -58,7 +60,8 @@ These are open and block the corresponding claims until their tasks land:
   Until then **no offline guarantee is made**.
 - Execution isolation (T05). Until then no repository code or generated test runs.
 - Safe snapshots: hooks, filters, symlinks, `.git` indirection, concurrent edits (T06).
-- Job ownership in the store and cross-caller reads (T04, T18, T19).
+- Ownership checks at the MCP adapter boundary and across reconnections (T18, T19). The
+  store enforces ownership for jobs, events, evidence, grants, repositories and preparations (T04).
 - Cache poisoning across jobs (T09, T16).
 - Local human approval mechanism for patch application (T20).
 - Adaptive adversarial suite (T22).

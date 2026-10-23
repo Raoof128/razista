@@ -85,6 +85,16 @@
           ]
         },
         {
+          "description": "An idempotency key was reused with different inputs.",
+          "type": "string",
+          "const": "IDEMPOTENCY_CONFLICT"
+        },
+        {
+          "description": "A terminal job was asked to change; terminal jobs are immutable.",
+          "type": "string",
+          "const": "JOB_TERMINAL"
+        },
+        {
           "description": "Input failed contract validation (bounds, enums, unknown fields, config).",
           "type": "string",
           "const": "INVALID_INPUT"

@@ -1,0 +1,22 @@
+[package]
+name = "ultra-store"
+description = "Durable local job state, append-only events and content-addressed evidence blobs."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+ultra-core = { path = "../ultra-core" }
+rusqlite.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+tempfile.workspace = true
+
+[lints]
+workspace = true

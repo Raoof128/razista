@@ -22,6 +22,26 @@
       "repository": "https://github.com/modelcontextprotocol/rust-sdk",
       "checksum": "see Cargo.lock",
       "protocol_versions_tested": ["2026-07-28", "2025-11-25"]
+    },
+    "rusqlite": {
+      "version": "0.40.2",
+      "license": "MIT",
+      "source": "https://crates.io/crates/rusqlite/0.40.2",
+      "checksum": "see Cargo.lock",
+      "features": ["bundled"],
+      "third_party_native_code": {
+        "crate": "libsqlite3-sys 0.38.2",
+        "component": "SQLite amalgamation (C), compiled by the crate build script",
+        "licence": "Public domain (SQLite) / MIT (libsqlite3-sys)",
+        "r26_status": "third-party library under the audited-dependency exception; no first-party C"
+      }
+    },
+    "yaml-rust2": {
+      "version": "0.13",
+      "license": "MIT OR Apache-2.0",
+      "source": "https://crates.io/crates/yaml-rust2",
+      "checksum": "see Cargo.lock",
+      "used_by": "xtask audit-sources (CI workflow parsing)"
     }
   },
   "inference_runtime": {

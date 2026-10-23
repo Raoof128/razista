@@ -25,6 +25,10 @@ pub enum ErrorCode {
     EvidenceInvalid,
     StalePatch,
     StoreUnavailable,
+    /// An idempotency key was reused with different inputs.
+    IdempotencyConflict,
+    /// A terminal job was asked to change; terminal jobs are immutable.
+    JobTerminal,
     /// Input failed contract validation (bounds, enums, unknown fields, config).
     InvalidInput,
 }
@@ -42,7 +46,7 @@ pub enum CoverageImpact {
 }
 
 impl ErrorCode {
-    pub const ALL: [ErrorCode; 16] = [
+    pub const ALL: [ErrorCode; 18] = [
         Self::BaseUnavailable,
         Self::SnapshotUnstable,
         Self::PolicyDenied,
@@ -58,6 +62,8 @@ impl ErrorCode {
         Self::EvidenceInvalid,
         Self::StalePatch,
         Self::StoreUnavailable,
+        Self::IdempotencyConflict,
+        Self::JobTerminal,
         Self::InvalidInput,
     ];
 
@@ -79,6 +85,8 @@ impl ErrorCode {
             | Self::BudgetExhausted
             | Self::EvidenceInvalid
             | Self::StalePatch
+            | Self::IdempotencyConflict
+            | Self::JobTerminal
             | Self::InvalidInput => false,
         }
     }
@@ -92,6 +100,7 @@ impl ErrorCode {
             | Self::EgressPolicyUnverified
             | Self::ModelNotInstalled
             | Self::StoreUnavailable
+            | Self::IdempotencyConflict
             | Self::InvalidInput => CoverageImpact::Blocking,
             Self::DependencyUnavailable
             | Self::LanguageUnsupported
@@ -99,7 +108,7 @@ impl ErrorCode {
             | Self::OutOfMemory
             | Self::BudgetExhausted
             | Self::WorkerTimeout => CoverageImpact::PartialCoverage,
-            Self::EvidenceInvalid | Self::StalePatch => CoverageImpact::None,
+            Self::EvidenceInvalid | Self::StalePatch | Self::JobTerminal => CoverageImpact::None,
         }
     }
 }

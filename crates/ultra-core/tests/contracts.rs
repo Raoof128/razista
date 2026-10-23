@@ -272,6 +272,35 @@ fn verification_cannot_be_borrowed_by_another_finding() {
 }
 
 #[test]
+fn evidence_cannot_back_two_verifications() {
+    // Security review: a second hypothesis's verification reuses the first
+    // finding's execution record.
+    let ids = ids();
+    let mut r = valid_report(&ids);
+    let h2 = HypothesisId::new();
+    let v2 = VerificationId::new();
+    r.verifications
+        .push(verification(
+            &ids,
+            v2,
+            h2,
+            EvidenceClass::RuntimeReproduced,
+            vec![ids.evidence],
+        ))
+        .expect("bounded");
+    let mut second = finding(
+        &ids,
+        h2,
+        Severity::High,
+        EvidenceClass::RuntimeReproduced,
+        vec![v2],
+    );
+    second.claim = text("an unrelated claim");
+    r.findings = bvec(vec![r.findings.as_slice()[0].clone(), second]);
+    assert_eq!(err_code(validate_report(&r)), ErrorCode::EvidenceInvalid);
+}
+
+#[test]
 fn verification_cited_by_two_findings_is_rejected() {
     let ids = ids();
     let mut r = valid_report(&ids);
@@ -735,6 +764,9 @@ fn every_error_code_declares_retryability_and_coverage_impact() {
     assert!(!ErrorCode::PolicyDenied.retryable());
     assert!(ErrorCode::StoreUnavailable.retryable());
     assert!(!ErrorCode::EvidenceInvalid.retryable());
+    assert!(!ErrorCode::IdempotencyConflict.retryable());
+    assert!(!ErrorCode::JobTerminal.retryable());
+    assert_eq!(ErrorCode::ALL.len(), 18);
 }
 
 // ---------- generated schemas ---------------------------------------------

@@ -4,6 +4,43 @@ All notable changes to RAZISTA (Local Ultra Review MCP). Newest first.
 
 ---
 
+Raouf: 2026-10-23 (Australia/Sydney) — T04 durable store
+- **Scope:** Plan task T04 (durable jobs, evidence blobs, ownership), its independent
+  review fixes, and one post-commit security-review fix in `ultra-core`.
+- **Summary:**
+  - New crate `ultra-store`: SQLite (bundled, WAL, `synchronous=FULL`, `fullfsync`)
+    plus a content-addressed blob directory. Versioned migrations; a newer schema is
+    refused. Owner-only permissions (dirs 0700, files 0600, blobs 0400); a looser
+    existing store directory is refused; an exclusive lock file stops a second process.
+  - Jobs are committed before `create_job` returns; idempotency is scoped to
+    (owner, repo, key) and a reused key with a different preparation is
+    `IDEMPOTENCY_CONFLICT`; terminal jobs refuse transitions and new evidence
+    (`JOB_TERMINAL`), also enforced by a database trigger. Events are append-only.
+  - Blobs publish tmp → fsync → rename → dir fsync → row; recovery removes partial
+    files and orphan blobs and reports missing ones; every read re-hashes the bytes.
+    Conflicting trust labels for the same bytes collapse to `untrusted`.
+  - Ownership: one uniform "not found or not owned" denial for jobs, events,
+    evidence, grants, repositories and preparations; artefact bytes are served only
+    through evidence the caller owns; preparations need the repo owner; grants are
+    loaded only by their caller and their ids are write-once.
+  - Retention (30 days job metadata, 7 days unreferenced artefacts) keeps running
+    jobs and pinned evidence, keeps the test behind evidence, and lists what it cannot
+    erase. At-rest status is reported as `unverified`, never as encrypted.
+  - `ultra-core`: new error codes `IDEMPOTENCY_CONFLICT`, `JOB_TERMINAL`; one evidence
+    record may back only one verification.
+- **Files changed:** `crates/ultra-store/**` (new), `crates/ultra-core/src/{errors,validate}.rs`,
+  `crates/ultra-core/tests/contracts.rs`, `Cargo.toml`, `Cargo.lock`, `schemas/*`,
+  `vendor/manifests/toolchain.json`, `security/threat-model.md`, `AGENT.md`, `CHANGELOG.md`.
+- **Verification:** `cargo test --workspace --locked` 114/114 (ultra-store 33 including a
+  real `abort()` crash test); clippy `-D warnings` clean; fmt clean; `audit-sources` 0
+  violations over 70 files.
+- **Follow-ups (deferred minors):** shard directories not fsynced into `blobs/`; a
+  directory inside `tmp/` blocks open; file owner uid and existing `-wal`/`-shm` modes not
+  checked; `transition()` has no state machine yet (T11); preparations, grants and repos
+  never expire; power-loss durability is configured but not tested.
+
+---
+
 Raouf: 2026-10-23 (Australia/Sydney) — independent review fix pass for T01–T03
 - **Scope:** Critical/Important findings from a fresh-context review of T01–T03.
 - **Summary:**

@@ -46,6 +46,8 @@ cargo run --locked -p xtask -- schemas      # regenerate schemas/ after contract
 
 - `crates/ultra-core` — domain contracts (`types.rs`, `primitives.rs`), errors,
   report validation, JSON Schema generation, trusted config and policy.
+- `crates/ultra-store` — durable jobs, append-only events, content-addressed evidence
+  blobs, ownership checks, recovery and retention (SQLite, bundled).
 - `crates/ultra-mcp` — MCP adapters (T18+). Currently holds the rmcp protocol probe.
 - `crates/xtask` — R26 source audit and schema generation.
 - `schemas/` — generated; do not hand-edit. `profiles/` — trusted operator profiles.
@@ -88,3 +90,18 @@ Raouf: 2026-10-23 (Australia/Sydney) — review fix pass
   client-supplied `ActionGrant` to `authorize`; load grants from the store by id.
 - Verification: `cargo test --workspace --locked` 80/80; clippy/fmt clean; audit 0 violations.
 - Follow-ups: deferred minors listed in CHANGELOG.md; next dependency-ready task is T04.
+
+---
+
+Raouf: 2026-10-23 (Australia/Sydney) — T04 durable store
+- Scope: new `ultra-store` crate; review fixes; evidence-reuse fix in `ultra-core`.
+- Rules for agents working on or with the store:
+  - Never return success to a client before the store call that persists it returns.
+  - Serve artefact bytes to callers only via `read_evidence_artifact`;
+    `read_artifact_unscoped` is controller-internal.
+  - Re-verification of a finished job creates a child job; terminal jobs are immutable.
+  - Add schema changes as a new entry in `MIGRATIONS`; never edit a released one.
+  - One process owns a store directory (lock file); the per-user daemon is that process.
+- Verification: `cargo test --workspace --locked` 114/114; clippy/fmt clean; audit 0 violations.
+- Follow-ups: next dependency-ready tasks are T05 (sandbox; needs a pinned Lima VM image)
+  and T06 (safe Git snapshots), both after T03.

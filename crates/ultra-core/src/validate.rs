@@ -96,12 +96,23 @@ pub fn validate_report(report: &ReviewReport) -> Result<()> {
         }
     }
     let mut verifications: HashMap<&VerificationId, &Verification> = HashMap::new();
+    let mut evidence_owner: HashMap<&EvidenceId, &VerificationId> = HashMap::new();
     for v in &report.verifications {
         if verifications.insert(&v.id, v).is_some() {
             return Err(ReviewError::evidence(format!(
                 "verification {} is listed more than once",
                 v.id
             )));
+        }
+        // One execution or diagnostic record backs one verification, so a
+        // single observation cannot be counted as support for two claims.
+        for eid in &v.evidence_ids {
+            if let Some(first) = evidence_owner.insert(eid, &v.id) {
+                return Err(ReviewError::evidence(format!(
+                    "evidence {eid} backs both verification {first} and {}",
+                    v.id
+                )));
+            }
         }
     }
 
