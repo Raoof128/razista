@@ -4,6 +4,21 @@ All notable changes to Razista, a local evidence-gated code review engine with a
 
 ---
 
+Raouf: 2026-10-23 (Australia/Sydney) — first public publication
+- **Scope:** Publish the repository publicly on GitHub.
+- **Summary:** Created the public repository https://github.com/Raoof128/razista and pushed
+  `main` with plan tasks T01–T04, T06 and T07 (T05 sandbox and T08 inference not started).
+  Pre-publication scan of all tracked files: no credentials, tokens, keys or local absolute
+  paths; personal data limited to the owner's first name in docs and the commit author email.
+  No licence file is included (`Cargo.toml` says `UNLICENSED`): the code is publicly visible
+  but not licensed for reuse until a licence is chosen.
+- **Files changed:** `CHANGELOG.md`, `AGENT.md`.
+- **Verification:** `git ls-remote origin main` matches the local `main`; CI workflow
+  (`.github/workflows/ci.yml`, Cargo-only steps) triggered by the push.
+- **Follow-ups:** choose a licence; add a README; T05/T08/T09.
+
+---
+
 Raouf: 2026-10-23 (Australia/Sydney) — T07 offline bundles and doctor; rename to Razista
 - **Scope:** Plan task T07, the product rename, its review fixes, and four security fixes to
   T04/T06 code raised by the automated review of commit 635ede8.

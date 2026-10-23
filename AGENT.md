@@ -142,3 +142,16 @@ Raouf: 2026-10-23 (Australia/Sydney) — rename to Razista; T07 offline bundles 
     the grant from the store; `capture(grant)` is for controller-internal use.
 - Verification: `cargo test --workspace --locked` 186/186; clippy/fmt clean; audit 0 violations.
 - Follow-ups: T05 (sandbox; pin a Lima image), T08 (managed llama.cpp), T09 (context index).
+
+---
+
+Raouf: 2026-10-23 (Australia/Sydney) — first public publication
+- Scope: the repository is public at https://github.com/Raoof128/razista (`origin`, branch `main`).
+- Rules for agents:
+  - Everything committed is public. Never commit credentials, tokens, model weights, offline
+    bundles, store directories or local absolute paths; run a secret/path scan before pushing.
+  - CI runs `.github/workflows/ci.yml` on every push; keep every step a single `cargo` command
+    (the R26 audit enforces this).
+  - No licence has been chosen yet (`UNLICENSED`); do not add one without the owner's decision.
+- Verification: remote `main` matches local `main` after push.
+- Follow-ups: licence decision; README; T05/T08/T09.
