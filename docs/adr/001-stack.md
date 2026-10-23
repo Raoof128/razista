@@ -19,7 +19,7 @@ Cargo. R17 requires tested support for MCP 2026-07-28 and 2025-11-25.
    `ProtocolVersion` exposes `V_2026_07_28` and `V_2025_11_25`; the SDK implements
    `server/discover`, per-request `_meta` validation, `resultType` gated to 2026 peers,
    and `ttlMs`/`cacheScope` on discovery. The probe in
-   `crates/ultra-mcp/tests/protocol_probe.rs` demonstrates both revisions end to end
+   `crates/razista-mcp/tests/protocol_probe.rs` demonstrates both revisions end to end
    over stdio framing. The SDK is a boundary adapter; review state lives in application
    handles, not protocol sessions.
 3. **Async-trait convention:** native `async fn` in traits (stable since Rust 1.75).

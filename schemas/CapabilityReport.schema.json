@@ -8,7 +8,7 @@
       "items": {
         "$ref": "#/$defs/Capability"
       },
-      "maxItems": 256
+      "maxItems": 2048
     },
     "hardware": {
       "anyOf": [
@@ -66,16 +66,25 @@
       ]
     },
     "CapabilityComponent": {
-      "type": "string",
-      "enum": [
-        "model",
-        "inference_runtime",
-        "sandbox",
-        "egress",
-        "compiler",
-        "packages",
-        "scanner",
-        "store"
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "model",
+            "inference_runtime",
+            "sandbox",
+            "egress",
+            "compiler",
+            "packages",
+            "scanner",
+            "store"
+          ]
+        },
+        {
+          "description": "The pinned git used for read-only snapshots.",
+          "type": "string",
+          "const": "git"
+        }
       ]
     },
     "CapabilityStatus": {
@@ -88,14 +97,24 @@
           ]
         },
         {
-          "description": "Present and its self-test passed.",
+          "description": "Present and verified as far as this component can be: integrity for\ndata, a passing self-test for anything that runs. A checksum alone never\nmakes a model, runtime, scanner, toolchain or execution image ready.",
           "type": "string",
           "const": "ready"
+        },
+        {
+          "description": "Usable, with a warning (e.g. an advisory database older than its freshness window).",
+          "type": "string",
+          "const": "stale"
         },
         {
           "description": "Present but not certified (e.g. an unmanaged localhost endpoint).",
           "type": "string",
           "const": "unverified"
+        },
+        {
+          "description": "Present but must not be used (checksum mismatch, no licence record, unsafe path).",
+          "type": "string",
+          "const": "invalid"
         }
       ]
     },
@@ -155,15 +174,15 @@
       "type": "string",
       "enum": [
         "python",
-        "type_script",
-        "java_script",
+        "typescript",
+        "javascript",
         "rust",
         "go",
         "java",
         "kotlin",
         "c",
         "cpp",
-        "c_sharp",
+        "csharp",
         "php",
         "ruby",
         "dart",

@@ -1,6 +1,47 @@
 # Changelog
 
-All notable changes to RAZISTA (Local Ultra Review MCP). Newest first.
+All notable changes to Razista, a local evidence-gated code review engine with an MCP interface. Newest first. Entries before the 2026-10-23 rename use the old `ultra-*` crate names.
+
+---
+
+Raouf: 2026-10-23 (Australia/Sydney) — T07 offline bundles and doctor; rename to Razista
+- **Scope:** Plan task T07, the product rename, its review fixes, and four security fixes to
+  T04/T06 code raised by the automated review of commit 635ede8.
+- **Summary:**
+  - **Rename:** the product is Razista. Crates `ultra-*` → `razista-*`, binary `ultra` →
+    `razista`, env vars `RAZISTA_*`; live docs updated. Older entries below keep old names.
+  - **`razista prepare`** (new crate `razista-cli`): assembles an offline bundle from local,
+    operator-supplied files; records version, licence, origin, digest, creation time and the
+    data's own date (required for advisory databases). Refuses files without a licence record,
+    sources or outputs inside any git checkout or listed repository (unresolvable protected
+    roots are an error), FIFOs and non-regular files; builds in a staging directory and renames
+    into place; never fetches.
+  - **Validation:** missing entries are `DEPENDENCY_UNAVAILABLE` rows (never a download);
+    checksum mismatches, links and missing licences are `invalid`; advisory data older than
+    7 days is `stale`; unmanaged runtimes are `unverified`; anything that must run (model,
+    runtime, scanner, toolchain, image) stays `unverified` until its self-test exists.
+  - **`razista doctor --offline [--json]`:** reports model, inference runtime, sandbox, egress,
+    compiler, packages, scanner, store and git separately, per-kind missing rows, hardware, and
+    every language with explicit capability flags (all `no` today). Never offline-certified
+    before T05/T08. Reads the store through a new read-only `Store::probe`.
+  - **Security fixes (T04/T06 code):** `capture` checks the grant's allowed scopes and the new
+    `capture_for(caller, repo, scope)` loads the grant from the store; `diff` reads only the
+    owner's artefacts (`Store::read_artifact_owned`); `put_evidence` and owned reads give one
+    identical error for absent and foreign artefacts; `put_artifact` always republishes (no
+    dedup timing oracle); symlinks and special files anywhere under `.git/objects`, `refs` and
+    `info` are refused; `GitBinary::at` requires a `git version` banner.
+  - Contracts: `BundleEntry.path`, `BundleEntry.data_as_of`, `BundleKind::Toolchain`,
+    `CapabilityStatus::{Stale, Invalid}`, `CapabilityComponent::Git`, 2048 capability rows,
+    language wire names `typescript`/`javascript`/`csharp`.
+- **Files changed:** all crates (rename), `crates/razista-cli/**` (new),
+  `crates/razista-core/src/types.rs`, `crates/razista-store/src/{db,cas,lib}.rs`,
+  `crates/razista-repo/src/{git,paths,snapshot,diff}.rs`, tests, `schemas/*`, `Cargo.toml`,
+  `Cargo.lock`, docs.
+- **Verification:** `cargo test --workspace --locked` 186/186; clippy `-D warnings` clean; fmt
+  clean; `audit-sources` 0 violations over 85 files. New repo-side guards mutation-checked.
+- **Follow-ups (deferred minors):** copied executables lose the exec bit; non-UTF-8 arguments
+  panic; hard links into repositories bypass protection; doctor re-hashes large files each run;
+  no `--require-certified` exit code yet; the bundle manifest is unsigned (T23).
 
 ---
 

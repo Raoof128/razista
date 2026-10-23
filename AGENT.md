@@ -1,4 +1,4 @@
-# AGENT.md — RAZISTA (Local Ultra Review MCP)
+# AGENT.md — RAZISTA (local evidence-gated code review engine with an MCP interface)
 
 Rules for any coding agent working in this repository. The authoritative spec and
 plan is `Project-RAZISTA.md` (Part I design, Part II implementation plan, Part III
@@ -44,13 +44,15 @@ cargo run --locked -p xtask -- schemas      # regenerate schemas/ after contract
 
 ## Layout (as built so far)
 
-- `crates/ultra-core` — domain contracts (`types.rs`, `primitives.rs`), errors,
+- `crates/razista-core` — domain contracts (`types.rs`, `primitives.rs`), errors,
   report validation, JSON Schema generation, trusted config and policy.
-- `crates/ultra-store` — durable jobs, append-only events, content-addressed evidence
+- `crates/razista-store` — durable jobs, append-only events, content-addressed evidence
   blobs, ownership checks, recovery and retention (SQLite, bundled).
-- `crates/ultra-repo` — immutable snapshots and diff context; the only code that runs git,
+- `crates/razista-repo` — immutable snapshots and diff context; the only code that runs git,
   through a hardened read-only runner.
-- `crates/ultra-mcp` — MCP adapters (T18+). Currently holds the rmcp protocol probe.
+- `crates/razista-cli` — the `razista` binary: `prepare` (offline bundles) and `doctor`
+  (capability report); review commands arrive with T17.
+- `crates/razista-mcp` — MCP adapters (T18+). Currently holds the rmcp protocol probe.
 - `crates/xtask` — R26 source audit and schema generation.
 - `schemas/` — generated; do not hand-edit. `profiles/` — trusted operator profiles.
 - `docs/adr/`, `security/`, `compat/`, `vendor/manifests/` — records, not code.
@@ -96,7 +98,7 @@ Raouf: 2026-10-23 (Australia/Sydney) — review fix pass
 ---
 
 Raouf: 2026-10-23 (Australia/Sydney) — T04 durable store
-- Scope: new `ultra-store` crate; review fixes; evidence-reuse fix in `ultra-core`.
+- Scope: new `razista-store` crate; review fixes; evidence-reuse fix in `razista-core`.
 - Rules for agents working on or with the store:
   - Never return success to a client before the store call that persists it returns.
   - Serve artefact bytes to callers only via `read_evidence_artifact`;
@@ -111,9 +113,9 @@ Raouf: 2026-10-23 (Australia/Sydney) — T04 durable store
 ---
 
 Raouf: 2026-10-23 (Australia/Sydney) — T06 immutable snapshots
-- Scope: new `ultra-repo` crate; review fixes; artefact owner scoping in `ultra-store`.
+- Scope: new `razista-repo` crate; review fixes; artefact owner scoping in `razista-store`.
 - Rules for agents:
-  - Never run git outside `ultra-repo`'s runner (`git.rs`), and never add porcelain that reads
+  - Never run git outside `razista-repo`'s runner (`git.rs`), and never add porcelain that reads
     the working tree through git (status, diff against worktree, add, checkout): those run
     filters and textconv. Read working-tree bytes with `paths::read_worktree`.
   - Any new git subcommand must be read-only, use `--end-of-options` before revisions, and be
@@ -124,3 +126,19 @@ Raouf: 2026-10-23 (Australia/Sydney) — T06 immutable snapshots
 - Verification: `cargo test --workspace --locked` 154/154; clippy/fmt clean; audit 0 violations.
 - Follow-ups: T05 (sandbox) still needs a pinned Lima VM image; T07 (offline bundles, doctor)
   and T09 (context index, after T06) are next candidates.
+
+---
+
+Raouf: 2026-10-23 (Australia/Sydney) — rename to Razista; T07 offline bundles and doctor
+- Scope: product rename, new `razista-cli` crate, review and security fixes.
+- Rules for agents:
+  - The product is **Razista**. Name crates `razista-*`, the binary `razista`, env vars
+    `RAZISTA_*`. "Ultra" only ever refers to Anthropic's own Ultra Review product.
+  - Dispatch subagents on Sonnet 5.5 (`model: "sonnet"`) in this project.
+  - Nothing in review fetches. A missing dependency is a `DEPENDENCY_UNAVAILABLE` row or gap.
+  - `Ready` for anything that runs requires its own self-test; a checksum alone is never enough.
+  - The doctor is read-only: use `Store::probe`, never `Store::open`, for diagnosis.
+  - Act on a caller's request with `Snapshotter::capture_for(caller, repo, scope)`, which loads
+    the grant from the store; `capture(grant)` is for controller-internal use.
+- Verification: `cargo test --workspace --locked` 186/186; clippy/fmt clean; audit 0 violations.
+- Follow-ups: T05 (sandbox; pin a Lima image), T08 (managed llama.cpp), T09 (context index).

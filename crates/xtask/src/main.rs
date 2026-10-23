@@ -62,16 +62,16 @@ fn write_schemas(root: &Path) -> ExitCode {
         eprintln!("schemas: cannot create {}: {e}", dir.display());
         return ExitCode::FAILURE;
     }
-    for (name, schema) in ultra_core::schema::all() {
+    for (name, schema) in razista_core::schema::all() {
         let path = dir.join(format!("{name}.schema.json"));
-        if let Err(e) = std::fs::write(&path, ultra_core::schema::render(&schema)) {
+        if let Err(e) = std::fs::write(&path, razista_core::schema::render(&schema)) {
             eprintln!("schemas: cannot write {}: {e}", path.display());
             return ExitCode::FAILURE;
         }
     }
     println!(
         "schemas: wrote {} contracts to {}",
-        ultra_core::schema::all().len(),
+        razista_core::schema::all().len(),
         dir.display()
     );
     ExitCode::SUCCESS

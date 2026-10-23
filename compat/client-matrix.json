@@ -2,7 +2,7 @@
   "schema_version": 1,
   "recorded": "2026-10-23",
   "sdk": { "name": "rmcp", "version": "3.7.0" },
-  "probe": "crates/ultra-mcp/tests/protocol_probe.rs",
+  "probe": "crates/razista-mcp/tests/protocol_probe.rs",
   "protocol_revisions": {
     "2026-07-28": {
       "status": "probe-passing",

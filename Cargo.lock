@@ -796,6 +796,74 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8dcc9c7d52a811697d2151c701e0d08956f92b0e24136cf4cf27b57a6a0d9bf"
 
 [[package]]
+name = "razista-cli"
+version = "0.1.0"
+dependencies = [
+ "razista-core",
+ "razista-repo",
+ "razista-store",
+ "rustix",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "toml",
+]
+
+[[package]]
+name = "razista-core"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "jsonschema",
+ "schemars",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "thiserror",
+ "toml",
+ "uuid",
+]
+
+[[package]]
+name = "razista-mcp"
+version = "0.1.0"
+dependencies = [
+ "rmcp",
+ "schemars",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "razista-repo"
+version = "0.1.0"
+dependencies = [
+ "razista-core",
+ "razista-store",
+ "rustix",
+ "serde_json",
+ "sha1",
+ "sha2",
+ "similar",
+ "tempfile",
+]
+
+[[package]]
+name = "razista-store"
+version = "0.1.0"
+dependencies = [
+ "razista-core",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "uuid",
+]
+
+[[package]]
 name = "redox_syscall"
 version = "0.5.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1299,59 +1367,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6f5e870be6c3b371b77fe0ee0bafb859fa4964b4404c27de1d380043c4dda20"
 
 [[package]]
-name = "ultra-core"
-version = "0.1.0"
-dependencies = [
- "hex",
- "jsonschema",
- "schemars",
- "serde",
- "serde_json",
- "sha2",
- "tempfile",
- "thiserror",
- "toml",
- "uuid",
-]
-
-[[package]]
-name = "ultra-mcp"
-version = "0.1.0"
-dependencies = [
- "rmcp",
- "schemars",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
-name = "ultra-repo"
-version = "0.1.0"
-dependencies = [
- "rustix",
- "serde_json",
- "sha1",
- "sha2",
- "similar",
- "tempfile",
- "ultra-core",
- "ultra-store",
-]
-
-[[package]]
-name = "ultra-store"
-version = "0.1.0"
-dependencies = [
- "rusqlite",
- "serde",
- "serde_json",
- "tempfile",
- "ultra-core",
- "uuid",
-]
-
-[[package]]
 name = "unicode-general-category"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1547,10 +1562,10 @@ checksum = "1ebf944e87a7c253233ad6766e082e3cd714b5d03812acc24c318f549614536e"
 name = "xtask"
 version = "0.1.0"
 dependencies = [
+ "razista-core",
  "serde",
  "tempfile",
  "toml",
- "ultra-core",
  "yaml-rust2",
 ]
 
