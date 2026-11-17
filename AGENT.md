@@ -164,3 +164,17 @@ Raouf: 2026-10-23 (Australia/Sydney) — fix bundle staging poisoning
   use `tempfile::Builder::tempdir_in` (exclusive, random, 0700) and rename into place. Refuse
   inputs (bundles, stores) whose root is a symlink or owned by another user.
 - Verification: `cargo test --workspace --locked` 188/188; CI on `main` passed.
+
+---
+
+Raouf: 2026-11-17 (Australia/Sydney) — README
+- Scope: `README.md` added (documentation only).
+- Rules for agents:
+  - Keep the README's "What exists today" and "What does not exist" lists in step with the plan
+    tasks as they land, in the same change that lands them.
+  - The README states only measured results. Do not add a performance, accuracy or compatibility
+    figure to it before the run that produced it is recorded in `CHANGELOG.md`.
+  - When the test count or the audit result in the README's "Build and test" section is updated,
+    name the commit and the date of the run.
+- Verification: `cargo test --workspace --locked` 188/188; clippy/fmt clean; audit 0 violations.
+- Follow-ups: licence decision (owner).
