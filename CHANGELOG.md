@@ -4,6 +4,24 @@ All notable changes to Razista, a local evidence-gated code review engine with a
 
 ---
 
+Raouf: 2026-11-17 (Australia/Sydney) — README
+- **Scope:** Documentation only. No code, schema or CI change.
+- **Summary:** Added `README.md`, written from the code and this changelog: what Razista is meant
+  to be, which six plan tasks are built (T01–T04, T06, T07), what is not built (sandbox,
+  inference, discovery, verification, reports, review commands, MCP server, benchmarks), how to
+  build and test, the two commands that exist, the rules the code enforces today, and the limits
+  (not usable as a reviewer, macOS only, no licence chosen). It states that no accuracy, speed or
+  platform figure exists.
+- **Files changed:** `README.md` (new), `CHANGELOG.md`, `AGENT.md`.
+- **Verification:** at `345f869` on macOS (Apple silicon), 17 November 2026:
+  `cargo test --workspace --locked` 188 passed, 0 failed; `cargo clippy --workspace --all-targets
+  --locked -- -D warnings` clean; `cargo fmt --all -- --check` clean. With the README added,
+  `cargo run --locked -p xtask -- audit-sources` checked 86 files, 0 violations.
+  `razista doctor --offline` output was read to confirm the status the README describes.
+- **Follow-ups:** licence decision (owner); T05/T08/T09 unchanged.
+
+---
+
 Raouf: 2026-10-23 (Australia/Sydney) — fix bundle staging poisoning
 - **Scope:** Security fix from the automated review of the first public push.
 - **Summary:** `razista prepare` built bundles in a staging directory with a predictable name
